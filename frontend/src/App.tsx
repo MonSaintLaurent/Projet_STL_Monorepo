@@ -9,6 +9,8 @@ import IndexPage from "@/pages/index";
 import AboutPage from "@/pages/about";
 import ProjectsPage from "@/pages/projects";
 import GamesPage from "@/pages/games";
+import LoginPage from "@/pages/login";
+import ProfilePage from "@/pages/profile";
 
 function App() {
   const { isLoading, error } = useAuth0();
@@ -27,6 +29,11 @@ function App() {
       <Route element={<AboutPage />} path="/about" />
       <Route element={<ProjectsPage />} path="/projets" />
       <Route element={<GamesPage />} path="/jeux" />
+      <Route element={<LoginPage />} path="/login" />
+      <Route element={<ProfilePage />} path="/profile" />
+
+      <Route path="/callback" element={<LoadingPage />} />
+
     </Routes>
   );
 }

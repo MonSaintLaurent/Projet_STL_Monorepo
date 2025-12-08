@@ -1,0 +1,9 @@
+[
+  { "icon": "⏳", "value": "12", "unit": "heures", "label": "Passées sur les défis", "visible": true },
+  { "icon": "🏆", "value": "430", "unit": "pts", "label": "Score max Défi 1", "visible": true },
+  { "icon": "🏆", "value": "380", "unit": "pts", "label": "Score max Défi 2", "visible": true },
+  { "icon": "", "value": "-", "unit": "", "label": "À voir", "visible": true },
+  { "icon": "", "value": "-", "unit": "", "label": "À voiiiiir", "visible": false },
+  { "icon": "", "value": "-", "unit": "", "label": "À voiiiiir", "visible": false },
+  { "icon": "", "value": "-", "unit": "", "label": "À voiiiiir", "visible": false }
+]

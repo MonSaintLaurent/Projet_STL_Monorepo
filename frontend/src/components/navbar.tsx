@@ -16,7 +16,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import Profile from "./profile";
+import ProfileButton from "./profileButton";
 import "@/styles/navbar.css";
 
 export const Navbar = () => {
@@ -85,7 +85,7 @@ export const Navbar = () => {
             Loading...
           </Button>
         ) : user ? (
-          <Profile />
+          <ProfileButton />
         ) : (
           <Button
             color="primary"
