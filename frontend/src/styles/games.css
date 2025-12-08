@@ -1,0 +1,24 @@
+.games-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+/* Message "d'autres défis arrivent" */
+.coming-soon {
+  width: 100%;
+  max-width: 72rem;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.coming-soon-text {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.dark .coming-soon-text {
+  color: #d1d5db;
+}

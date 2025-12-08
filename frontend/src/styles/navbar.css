@@ -1,0 +1,28 @@
+.navbar-logo {
+  height: 2rem;
+}
+
+.navbar-brand-link {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-center-links {
+  display: none;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .navbar-center-links {
+    display: flex;
+  }
+}
+
+.navbar-mobile-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

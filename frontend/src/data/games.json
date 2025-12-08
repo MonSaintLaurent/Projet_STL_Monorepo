@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "title": "DÉPOLUE TON SAINT LAURENT",
+    "description": "Plonge dans ce jeu captivant où ta mission est de purifier le fleuve Saint-Laurent en collectant les éléments nocifs qui menacent son écosystème !",
+    "image": "🌊",
+    "color": "blue"
+  },
+  {
+    "id": 2,
+    "title": "TROUVE LA VALEUR",
+    "description": "Explore ce jeu fascinant où tu dois identifier l'endroit où une valeur est présente. Plus tu es proche en naviguant à travers le fleuve Saint-Laurent !",
+    "image": "📍",
+    "color": "blue"
+  }
+]

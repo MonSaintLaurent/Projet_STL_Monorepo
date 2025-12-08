@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Neuville",
+    "location": "Saint Laurent",
+    "image": "🗺️"
+  },
+  {
+    "id": 2,
+    "name": "Saint-Jean-Port-Joli",
+    "location": "Saint Laurent",
+    "image": "🗺️"
+  },
+  {
+    "id": 3,
+    "name": "Saint-Bernard-sur-Mer",
+    "location": "Saint Laurent",
+    "image": "🗺️"
+  },
+  {
+    "id": 4,
+    "name": "Beaupré",
+    "location": "Saint Laurent",
+    "image": "🗺️"
+  },
+  {
+    "id": 5,
+    "name": "Québec",
+    "location": "Saint Laurent",
+    "image": "🗺️"
+  },
+  {
+    "id": 6,
+    "name": "Saint Rédempteur",
+    "location": "Rivière Thaudière",
+    "image": "🗺️"
+  },
+  {
+    "id": 7,
+    "name": "Innondation 132",
+    "location": "Rivière Ouelle",
+    "image": "🗺️"
+  }
+]

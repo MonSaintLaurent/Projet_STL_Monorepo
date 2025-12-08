@@ -1,0 +1,139 @@
+.about-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+/* Section titre */
+.about-title-section {
+  width: 100%;
+  max-width: 72rem;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.about-title-badge {
+  color: white;
+  background-color: #2563eb;
+  padding: 0.75rem 3rem;
+  border-radius: 9999px;
+  font-size: 1.125rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dark .about-title-badge {
+  background-color: #1d4ed8;
+}
+
+/* Section description */
+.about-description {
+  width: 100%;
+  max-width: 60rem;
+  margin-bottom: 4rem;
+  padding: 0 2rem;
+}
+
+.about-text {
+  text-align: justify;
+  line-height: 1.8;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.dark .about-text {
+  color: #d1d5db;
+}
+
+/* Section équipe */
+.team-section {
+  width: 100%;
+  max-width: 60rem;
+  padding: 0 2rem;
+}
+
+.team-member {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 4rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .team-member {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+/* Photo */
+.member-photo-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.member-photo {
+  width: 280px;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  background-color: #f3f4f6;
+}
+
+.dark .member-photo {
+  background-color: #374151;
+}
+
+/* Info */
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.member-name {
+  font-size: 1.875rem;
+  font-weight: 400;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.dark .member-name {
+  color: #f9fafb;
+}
+
+.member-title {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+.dark .member-title {
+  color: #9ca3af;
+}
+
+.member-description {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #374151;
+  text-align: justify;
+}
+
+.dark .member-description {
+  color: #d1d5db;
+}
+
+.member-expertise {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #374151;
+  margin-top: 1rem;
+}
+
+.dark .member-expertise {
+  color: #d1d5db;
+}

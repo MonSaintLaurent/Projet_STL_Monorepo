@@ -1,0 +1,145 @@
+.projects-page {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 0;
+}
+
+/* Section "Projets" */
+.projects-section {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.projects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.projects-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+}
+
+.dark .search-box {
+  background-color: #1f2937;
+}
+
+.search-icon {
+  color: #9ca3af;
+}
+
+.search-input {
+  background-color: transparent;
+  outline: none;
+  font-size: 0.875rem;
+  width: 12rem;
+  border: none;
+}
+
+.dark .search-input {
+  color: #f3f4f6;
+}
+
+.search-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 1.25rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dark .search-clear {
+  color: #9ca3af;
+}
+
+/* Grille */
+.projects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .projects-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Carte d'affichage */
+.project-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.project-image {
+  background: linear-gradient(to bottom right, #dbeafe, #d1fae5);
+  border-radius: 1rem;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  border: 2px solid #e5e7eb;
+  font-size: 2.25rem;
+}
+
+.dark .project-image {
+  background: linear-gradient(to bottom right, #1e3a8a, #065f46);
+  border-color: #374151;
+}
+
+.project-info {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.project-name {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.project-location {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Message aucun résultat, centré gris */
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.dark .no-results {
+  color: #9ca3af;
+}

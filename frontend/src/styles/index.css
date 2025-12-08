@@ -1,0 +1,214 @@
+.index-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+/* Section "Défisdu jour" */
+.defis-section {
+  width: 100%;
+  max-width: 72rem;
+}
+
+.defis-badge-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: -20px;
+  position: relative;
+  z-index: 10;
+}
+
+.defis-badge {
+  color: white;
+  background-color: #2563eb;
+  padding: 0.75rem 3rem;
+  border-radius: 9999px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dark .defis-badge {
+  background-color: #1d4ed8;
+}
+
+.defis-container {
+  background-color: #f3f4f6;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  padding-top: 3rem;
+}
+
+.dark .defis-container {
+  background-color: #1f2937;
+}
+
+.defis-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .defis-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Carte d'affichage de jeu */
+.game-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.game-image {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 3.75rem;
+}
+
+.game-image.blue {
+  background: linear-gradient(to bottom right, #bfdbfe, #93c5fd);
+}
+
+.game-image.pink {
+  background: linear-gradient(to bottom right, #fbcfe8, #fca5a5);
+}
+
+.game-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+}
+
+.game-description {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+}
+
+.dark .game-description {
+  color: #9ca3af;
+}
+
+/* Section PROJETS */
+.projects-section {
+  width: 100%;
+  max-width: 72rem;
+  margin-top: 4rem;
+}
+
+.projects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.projects-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+}
+
+.dark .search-box {
+  background-color: #1f2937;
+}
+
+.search-icon {
+  color: #9ca3af;
+}
+
+.search-input {
+  background-color: transparent;
+  outline: none;
+  font-size: 0.875rem;
+  width: 12rem;
+  border: none;
+}
+
+.dark .search-input {
+  color: #f3f4f6;
+}
+
+/* Grille des projets */
+.projects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .projects-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Carte d'affichage de projet */
+.project-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.project-image {
+  background: linear-gradient(to bottom right, #dbeafe, #d1fae5);
+  border-radius: 1rem;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  border: 2px solid #e5e7eb;
+  font-size: 2.25rem;
+}
+
+.dark .project-image {
+  background: linear-gradient(to bottom right, #1e3a8a, #065f46);
+  border-color: #374151;
+}
+
+.project-info {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.project-name {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.project-location {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
