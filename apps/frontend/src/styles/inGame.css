@@ -1,0 +1,202 @@
+.game-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.game-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.5rem;
+  background-color: white;
+}
+
+/* HUD */
+.game-hud {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.game-objective-badge {
+  background-color: #1e40af;
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 2rem 0 0 2rem;
+  font-size: 0.875rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
+.game-objective-text {
+  background-color: #2563eb;
+  color: white;
+  padding: 1.5rem 2rem;
+  font-size: 1rem;
+  min-width: 400px;
+  text-align: center;
+}
+
+.game-timer {
+  background-color: white;
+  color: #2563eb;
+  padding: 1.5rem 2rem;
+  border-radius: 0 2rem 2rem 0;
+  font-size: 1.25rem;
+  font-weight: bold;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Légende */
+.game-legend {
+  position: absolute;
+  bottom: 120px;
+  right: 30px;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  width: 140px;
+}
+
+.legend-gradient {
+  width: 60px;
+  height: 200px;
+  background: linear-gradient(to bottom, 
+    #ff0000 0%,
+    #ffff00 25%,
+    #00ff00 50%,
+    #00ffff 75%,
+    #0000ff 100%
+  );
+  border-radius: 0.5rem;
+  margin: 0 auto 0.5rem;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.legend-unit {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.legend-label-text {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Bouton valider */
+.game-validate-btn {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  background-color: #e5e7eb;
+  color: #374151;
+  border: none;
+  padding: 1.5rem 3rem;
+  border-radius: 1rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.game-validate-btn:hover {
+  background-color: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.game-validate-btn:active {
+  background-color: #2563eb;
+  color: white;
+}
+
+/* Résultat */
+.game-result-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 3rem;
+  border-radius: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  text-align: center;
+  min-width: 400px;
+}
+
+.game-result-modal h2 {
+  font-size: 2rem;
+  margin: 0 0 1.5rem 0;
+  color: #111827;
+}
+
+.result-score {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #2563eb;
+  margin: 1rem 0;
+}
+
+.game-result-modal p {
+  font-size: 1.25rem;
+  margin: 0.5rem 0;
+  color: #374151;
+}
+
+.result-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.result-buttons button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.result-buttons button:hover {
+  background-color: #1d4ed8;
+}
+
+.result-buttons button:last-child {
+  background-color: #6b7280;
+}
+
+.result-buttons button:last-child:hover {
+  background-color: #4b5563;
+}

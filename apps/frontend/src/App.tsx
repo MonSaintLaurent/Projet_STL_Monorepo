@@ -11,6 +11,8 @@ import ProjectsPage from "@/pages/projects";
 import GamesPage from "@/pages/games";
 import LoginPage from "@/pages/login";
 import ProfilePage from "@/pages/profile";
+import FindValueGame from "./pages/games/findValue";
+import DepollueGame from "./pages/games/depollue";
 
 function App() {
   const { isLoading, error } = useAuth0();
@@ -29,11 +31,11 @@ function App() {
       <Route element={<AboutPage />} path="/about" />
       <Route element={<ProjectsPage />} path="/projets" />
       <Route element={<GamesPage />} path="/jeux" />
+      <Route element={<FindValueGame />} path="/jeux/findValue" />
+      <Route element={<DepollueGame />} path="/jeux/depollue" />
       <Route element={<LoginPage />} path="/login" />
       <Route element={<ProfilePage />} path="/profile" />
-
-      <Route path="/callback" element={<LoadingPage />} />
-
+      <Route element={<LoadingPage />} path="/callback" />
     </Routes>
   );
 }

@@ -12,7 +12,7 @@ export default function DefisSection() {
       {/* Container des 2 défis du jour */}
       <div className="defis-container">
         <div className="defis-grid">
-          {gamesData.map((game) => (
+          {gamesData.games.map((game) => (
             <div key={game.id} className="game-card">
               <div className={`game-image ${game.color}`}>
                 <div>{game.image}</div>
@@ -26,6 +26,13 @@ export default function DefisSection() {
                 color="secondary" 
                 size="lg"
                 className="font-bold"
+                onPress={() =>{
+                  if (game.route) {
+                    window.location.href = game.route;
+                  } else {
+                    console.warn(`Aucune route définie pour le jeu "${game.title}"`);
+                  }
+                }}
               >
                 JOUER
               </Button>
