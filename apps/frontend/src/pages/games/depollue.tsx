@@ -4,31 +4,50 @@ import {Map} from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {TextLayer} from "@deck.gl/layers";
-import {depollueMaps} from "@/data/depollue/maps";
 import {Button} from "@heroui/button";
 import DefaultLayout from "@/layouts/default";
 import {games} from "@/data/games.json"
 import Objectif from "@/components/objective";
 
+type DepollueMap = {
+  id: number;
+  name: string;
+  initial_view_state: any;
+  timer: number;
+  nb_pollutants: number;
+  nb_allowedObjects: number;
+  spawn_points: [number, number][];
+};
+
+type GameObject = {
+  id: string;
+  emoji: string;
+  name: string;
+  description?: string;
+};
+
+
 // Type pour un objet spawné
 type SpawnedObject = {
   position: [number, number];
   type: "pollutant" | "allowed";
-  object: any; // Emoji et un nom
+  object: GameObject; // Emoji et un nom
 };
 
 // Générer objets sur la carte
-function generateObjectsOnMap(map: typeof depollueMaps[1]): SpawnedObject[] {
-  const {spawnPoints, nb_allowedObjects, nb_pollutants, allowedObjects, pollutants} = map;
+function generateObjectsOnMap(map: DepollueMap,pollutants: GameObject[], allowedObjects: GameObject[]): SpawnedObject[] {
+
+  const {spawn_points, nb_allowedObjects, nb_pollutants} = map;
+
 
   const totalToSpawn = nb_allowedObjects + nb_pollutants;
-  if (totalToSpawn > spawnPoints.length) {
+  if (totalToSpawn > spawn_points.length) {
     throw new Error(
-      `Trop d'objets à générer (${totalToSpawn}) pour le nombre de spawn points (${spawnPoints.length})`
+      `Trop d'objets à générer (${totalToSpawn}) pour le nombre de spawn points (${spawn_points.length})`
     );
   }
 
-  const shuffledPoints = [...spawnPoints].sort(() => Math.random() - 0.5);
+  const shuffledPoints = [...spawn_points].sort(() => Math.random() - 0.5);
   const spawnedObjects: SpawnedObject[] = [];
 
   // Autorisés
@@ -67,20 +86,92 @@ function getTimeMultiplier(percentRemaining: number) {
 
 export default function DepollueGame() {
   const deckRef = useRef<any>(null);
-  const currentMap = depollueMaps[1];
+
+  const [spawnedObjects, setSpawnedObjects] = useState<SpawnedObject[]>([]);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [endTimeLeft, setEndTimeLeft] = useState<number | null>(null);
+  const [timeUp, setTimeUp] = useState(false);
+  const [collectedCount, setCollectedCount] = useState(0);
+  const [removedAllowed, setRemovedAllowed] = useState(0);
+
+  const [maps, setMaps] = useState<DepollueMap[]>([]);
+  const [currentMap, setCurrentMap] = useState<DepollueMap | null>(null);
+
+  const [pollutants, setPollutants] = useState<GameObject[]>([]);
+  const [allowedObjects, setAllowedObjects] = useState<GameObject[]>([]);
 
   // Récupérer l'objectif depuis games.json
   const gameData = games.find(g => g.id === 1);
   const objective = gameData?.objective || "Retirer les objets dangereux pour l'environnement dans le Saint-Laurent";
 
 
-  const [spawnedObjects, setSpawnedObjects] = useState<SpawnedObject[]>([]);
-  const [timeLeft, setTimeLeft] = useState<number>(currentMap.timer);
-  const [endTimeLeft, setEndTimeLeft] = useState<number | null>(null);
-  const [timeUp, setTimeUp] = useState(false);
-  const [collectedCount, setCollectedCount] = useState(0);
-  const [removedAllowed, setRemovedAllowed] = useState(0);
+  // Load maps et objets
+  useEffect(() => {
+    async function loadGameData() {
+      const [mapsRes, objectsRes] = await Promise.all([
+        fetch("http://localhost:8000/depollue/maps"),
+        fetch("http://localhost:8000/depollue/objects"),
+      ]);
 
+      const mapsData = await mapsRes.json();
+      const objectsData = await objectsRes.json();
+
+      setMaps(mapsData.maps);
+      setCurrentMap(mapsData.maps[0]); // map 1 par défaut
+
+      setPollutants(objectsData.pollutants);
+      setAllowedObjects(objectsData.allowedObjects);
+    }
+
+    loadGameData();
+  }, []);
+
+
+  // Générer les objets au montage
+  useEffect(() => {
+    if (!currentMap || pollutants.length === 0 || allowedObjects.length === 0 || !currentMap.spawn_points) return ;
+
+    const objects = generateObjectsOnMap(currentMap, pollutants, allowedObjects);
+
+    setSpawnedObjects(objects);
+  }, [currentMap, pollutants, allowedObjects]);
+
+
+  // Timer
+  useEffect(() => {
+    if (timeUp) return;
+    const interval = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(interval);
+          setTimeUp(true);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeUp]);
+
+
+  // Initial time
+  useEffect(() => {
+    if (currentMap) setTimeLeft(currentMap.timer);
+  }, [currentMap]);
+
+
+  // Fin de jeu
+  function endGame() {
+    if (!timeUp) {
+      setEndTimeLeft(timeLeft); // figer le temps restant
+      setTimeUp(true);
+    }
+  }
+
+  // Chargement
+  if (!currentMap || !currentMap.spawn_points || pollutants.length === 0 || allowedObjects.length === 0) {
+    return <div>Chargement du jeu...</div>;
+  }
 
   // Score : 100pts par polluants trouvés, 50 pts enlevés par mauvais objet enlevé, et multiplicateur de score suivant le temps restant à la fin de la game
   const points_per_pollutants = 100;
@@ -99,35 +190,6 @@ export default function DepollueGame() {
   const final_scorePlayer = Math.min(max_score, Math.round((scoreWithMultiplier/Math.max(1, mapMaxScore)) * max_score)); // Score final normalisé vers 1000
 
   const progressPercent = Math.min(100, (final_scorePlayer/max_score) * 100);
-
-  // Générer les objets au montage
-  useEffect(() => {
-    const objects = generateObjectsOnMap(currentMap);
-    setSpawnedObjects(objects);
-  }, [currentMap]);
-
-  // Timer
-  useEffect(() => {
-    if (timeUp) return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          clearInterval(interval);
-          setTimeUp(true);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timeUp]);
-
-  function endGame() {
-    if (!timeUp) {
-      setEndTimeLeft(timeLeft); // figer le temps restant
-      setTimeUp(true);
-    }
-  }
 
   // Layer DeckGL pour les emojis
   const objectLayer = new TextLayer({
@@ -165,6 +227,7 @@ export default function DepollueGame() {
     },
   });
 
+  // Render
   if (timeUp) {
     return (
       <DefaultLayout fullScreen>
@@ -188,7 +251,7 @@ export default function DepollueGame() {
             <div style={{textAlign: "center" }}>
               <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Déchets</div>
               <div style={{display: "flex", gap: 15, fontSize: 40 }}>
-                {currentMap.pollutants.map((obj, idx) => (
+                {pollutants.map((obj: GameObject, idx: number) => (
                   <span key={idx}>{obj.emoji}</span>
                 ))}
               </div>
@@ -196,7 +259,7 @@ export default function DepollueGame() {
             <div style={{textAlign: "center" }}>
               <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Poissons</div>
               <div style={{display: "flex", gap: 15, fontSize: 40}}>
-                {currentMap.allowedObjects.map((obj, idx) => (
+                {allowedObjects.map((obj: GameObject, idx: number) => (
                   <span key={idx}>{obj.emoji}</span>
                 ))}
               </div>
@@ -332,7 +395,7 @@ export default function DepollueGame() {
         <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 40, background: "white", zIndex: 1500}} />
         <DeckGL
           ref={deckRef}
-          initialViewState={currentMap.initialViewState}
+          initialViewState={currentMap.initial_view_state}
           controller={false}
           layers={[objectLayer]}
           style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%"}}
