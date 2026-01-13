@@ -1,0 +1,2 @@
+declare const _default: "2.11.2";
+export default _default;

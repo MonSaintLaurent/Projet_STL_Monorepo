@@ -1,7 +1,40 @@
 import { Button } from "@heroui/button";
-import gamesData from "@/data/games.json";
+import { useState, useEffect } from "react";
+
+interface Game {
+  id: number;
+  title: string;
+  description: string;
+  image?: string;
+  color?: string;
+  route?: string;
+  objective?: string;
+}
 
 export default function DefisSection() {
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch les jeux depuis l'API backend
+  useEffect(() => {
+    async function fetchGames() {
+      try {
+        const res = await fetch("http://localhost:8000/games/"); // Endpoint backend
+        const data = await res.json();
+        setGames(data.games);
+      } catch (err) {
+        console.error("Erreur lors du fetch des jeux :", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchGames();
+  }, []);
+
+  if (loading) {
+    return <p>Chargement des jeux...</p>;
+  }
+  
   return (
     <div className="defis-section">
       {/* Titre bleu "Défis du jour" collé au container double page défi */}
@@ -12,7 +45,7 @@ export default function DefisSection() {
       {/* Container des 2 défis du jour */}
       <div className="defis-container">
         <div className="defis-grid">
-          {gamesData.games.map((game) => (
+          {games.map((game) => (
             <div key={game.id} className="game-card">
               <div className={`game-image ${game.color}`}>
                 <div>{game.image}</div>

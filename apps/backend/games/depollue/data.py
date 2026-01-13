@@ -106,7 +106,7 @@ depollue_maps = {
         },
         "timer": 120,
         "nb_pollutants": 2,
-        "nb_allowed_objects": 2,
+        "nb_allowedObjects": 2,
         "pollutants": [
             pollutants["oil_barrel"],
             pollutants["plastic_bottle"],

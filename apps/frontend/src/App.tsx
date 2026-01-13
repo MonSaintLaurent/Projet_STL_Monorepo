@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect, useRef } from "react";
 
 import LoadingPage from "./pages/loading";
 import ErrorPage from "./pages/error";
@@ -15,7 +16,40 @@ import FindValueGame from "./pages/games/findValue";
 import DepollueGame from "./pages/games/depollue";
 
 function App() {
-  const { isLoading, error } = useAuth0();
+  const {isLoading, error, isAuthenticated, user, getAccessTokenSilently} = useAuth0();
+  const hasSynced = useRef(false);
+
+  // Synchronisation avec le backend
+  useEffect(() => {
+    const syncUser = async () => {
+      if (!user || hasSynced.current) return;
+      hasSynced.current = true;
+
+      try {
+        const token = await getAccessTokenSilently({
+          audience: "https://api.monstl.local",
+          scope: "openid profile email",
+        } as any);
+
+        // Envoyer l'ID token au backend
+        const res = await fetch("http://localhost:8000/auth/sync_user", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await res.json();
+        console.log("Réponse backend:", data);
+      } catch (err) {
+        console.error("Erreur sync user:", err);
+        hasSynced.current = false;
+      }
+    };
+
+    syncUser();
+  }, [user, getAccessTokenSilently]);
 
   if (error) {
     return <ErrorPage />;

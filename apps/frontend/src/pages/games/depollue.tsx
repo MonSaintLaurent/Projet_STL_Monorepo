@@ -397,6 +397,7 @@ export default function DepollueGame() {
           ref={deckRef}
           initialViewState={currentMap.initial_view_state}
           controller={false}
+          getCursor={() => 'pointer'}
           layers={[objectLayer]}
           style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%"}}
         >

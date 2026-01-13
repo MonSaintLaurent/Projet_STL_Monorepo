@@ -18,6 +18,8 @@ export function Provider({ children }: { children: React.ReactNode }) {
       authorizationParams={{
         redirect_uri: window.location.origin, // Remettre en prod
         // redirect_uri: window.location.origin + "/callback",
+        audience: "https://api.monstl.local", // API_AUDIENCE côté backend
+        scope: "openid profile email",
       }}
       cacheLocation="localstorage"
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}

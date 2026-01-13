@@ -2,21 +2,31 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from games.depollue.routes import router as depollue_router
+from routes.auth import router as auth_router
+from routes.games import router as games_router
+from routes.projects import router as projects_router
+
 
 app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 
-# Version 0, pas du tout à jour, à mettre en place
+# CORS pour permettre au frontend de communiquer avec le backend
+origins = [
+    "http://localhost:5173",
+]
 
-# CORS pour permettre au frontend de communiquer
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # Front
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["http://localhost:5173"], # Front, URL autorisées
+    allow_credentials=True, # Cookies autorisés
+    allow_methods=["*"], # Pour get, POST, ...
     allow_headers=["*"],
 )
 
 app.include_router(depollue_router)
+app.include_router(auth_router)
+app.include_router(games_router)
+app.include_router(projects_router)
+
 
 @app.get("/")
 def read_root():
