@@ -1,0 +1,137 @@
+BACKEND / DB — RECAP STRUCTURE
+
+==============================
+database.py
+------------------------------
+- Connexion à PostgreSQL via SQLAlchemy
+- Définit engine, SessionLocal et Base
+- Utilisé PARTOUT
+- NE CRÉE AUCUNE TABLE
+- Ne se lance jamais directement
+
+
+==============================
+models/
+------------------------------
+
+depollue_db.py
+- Tables du jeu Depollue :
+  - depollue_maps
+  - depollue_objects
+- Contient juste la définition des tables
+- Jamais exécuté directement
+
+
+geo_db.py
+- (À venir) Tables géospatiales génériques
+
+
+core_db.py
+- (À venir) Tables communes (users, scores, etc.)
+
+
+==============================
+init.sql
+------------------------------
+- Script SQL historique
+- Sert à activer PostGIS et créer des tables génériques
+- Exécuté une seule fois lors de l’installation
+- Optionnel à terme (remplacé par SQLAlchemy)
+
+
+==============================
+init_depollue_db.py
+------------------------------
+- Script d'INITIALISATION DES TABLES Depollue
+- Crée les tables :
+  - depollue_maps
+  - depollue_objects
+- À exécuter 1seule fois
+- Pour la structure, pas de data
+- À relancer uniquement si la DB est reset
+
+
+==============================
+init_depollue_data.py
+------------------------------
+- Script d'INITIALISATION DES DONNÉES Depollue
+- Insère :
+  - les maps
+  - les objets polluants
+  - les objets autorisés
+- Utilise les fichiers temporaires games/depollue/data.py
+- À exécuter UNE FOIS après la création des tables
+- Peut être relancé après un wipe DB
+
+
+==============================
+JEU DEPOLLUE — TABLES
+------------------------------
+- depollue_maps :
+  - infos gameplay
+  - centre de la carte (PostGIS)
+  - spawn_points stockés en JSONB
+
+- depollue_objects :
+  - tous les objets du jeu
+  - différenciés par object_type = pollutant | allowed
+
+
+==============================
+LIEN Auth0 et DB
+------------------------------
+Frontend -> Auth0 -> JWT -> Backend FastAPI -> PostgreSQL (users)
+
+User se connecte, login via Auth0, Auth0 rennvoie un JWT qui contient : 
+  {
+    "sub": "auth0|abc123",
+    "email": "alice@insa.fr",
+    "name": "Alice",
+    "picture": "https://..."
+  }
+Avec sub l'ID Auth0 unique, clé primaire
+Puis frontend appelle le backend, qui lui vérifie le JWT (vérif la signature, décode le token, extrait les infos)
+Puis sync avec la table user, forme :
+  Si users.auth0_id existe :
+      UPDATE last_login
+  Sinon :
+      INSERT nouvel utilisateur
+
+Avec Auth0 = gestion identité + login et DB = profil + gameplay
+
+
+
+
+
+database.py -> crée le moteur SQLAlchemy et la Base
+
+models/depollue_db.py -> définitions DepollueMap et DepollueObject
+
+init_depollue_db.py -> crée les tables si elles existent pas
+
+init_depollue_data.py -> remplit les tables avec les maps et objets
+
+routes.py -> récupère les données depuis la DB
+
+(venv) PS C:\Users\alice\Documents\Alice\INSA\4A\ETS\MonSaintLaurent\github\Projet_STL_Monorepo\apps\backend> docker volume inspect monstl_postgis_data
+[
+    {
+        "CreatedAt": "2026-01-07T17:01:05Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/monstl_postgis_data/_data",
+        "Name": "monstl_postgis_data",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+
+
+
+Règle FastAPI :
+main.py : assemble l’application
+routes/*.py : déclare des endpoints (/login, /me, /protected, etc.)
+auth/*.py : logique technique d’authentification (JWT, Auth0)
+crud/*.py : fonctions DB (Create / Read / Update / Delete)
+
+On ne met PAS d’endpoint dans main.py
