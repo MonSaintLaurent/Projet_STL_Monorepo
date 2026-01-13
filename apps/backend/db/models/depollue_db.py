@@ -27,9 +27,7 @@ class DepollueMap(Base):
 class DepollueObject(Base):
     __tablename__ = "depollue_objects"
 
-    id = Column(Integer, primary_key=True)
-
-    code = Column(String(50), nullable=False)  # plastic_bottle
+    id = Column(String(50), nullable=False, primary_key=True)  # plastic_bottle
     emoji = Column(String(10), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text)

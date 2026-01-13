@@ -25,3 +25,14 @@
     ```
 
 Le projet sera accessible sur [http://localhost:5173](http://localhost:5173).
+
+
+
+
+------------- TODO
+- mettre des icones dans depollue
+- gestion fin de jeu de findValue
+- gérer les validations de point dans findValue : pour ceci, d'abord, check qu'on puisse communiquer avec PostgreSQL, récupérer les valeurs max
+- créer les DB des personnes
+- une fois profils faits, lier le gain de point aux jeux
+- ajouter une page explications pour le depollue

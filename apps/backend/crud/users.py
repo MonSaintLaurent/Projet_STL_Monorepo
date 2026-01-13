@@ -2,7 +2,7 @@
 # Create Read Update Delete
 
 from sqlalchemy.orm import Session
-from apps.backend.db.models.users_db import User
+from db.models.users_db import User
 from datetime import datetime, timezone
 
 def get_user_by_auth0_id(db: Session, auth0_id: str):

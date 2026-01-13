@@ -11,20 +11,22 @@ from shapely.geometry import Point
 def init_data():
     session = SessionLocal()
 
-    # --- Défis
+    # --- Défis (insert que si n'existe pas)
     for g in defis_data:
-        session.merge(models.Defi(  # merge = safe si déjà présent
-            id=g["id"],
-            title=g["title"],
-            description=g["description"],
-            game_type=g["game_type"],
-            difficulty=g["difficulty"],
-            max_score=g["max_score"],
-            image=g.get("image", ""),
-            color=g.get("color", "blue"),
-            route=g.get("route", ""),
-            objective=g.get("objective", ""),
-        ))
+        existing = session.query(models.Defi).filter_by(id=g["id"]).first()
+        if not existing:
+            session.merge(models.Defi(  # merge = safe si déjà présent
+                id=g["id"],
+                title=g["title"],
+                description=g["description"],
+                game_type=g["game_type"],
+                difficulty=g["difficulty"],
+                max_score=g["max_score"],
+                image=g.get("image", ""),
+                color=g.get("color", "blue"),
+                route=g.get("route", ""),
+                objective=g.get("objective", ""),
+            ))
 
     # --- Projets
     for p in projects_data:
@@ -38,7 +40,7 @@ def init_data():
     # --- Objets Depollue
     for obj in pollutants.values():
         session.merge(models.DepollueObject(
-            code=obj["id"],
+            id=obj["id"],
             emoji=obj["emoji"],
             name=obj["name"],
             description=obj["description"],
@@ -47,7 +49,7 @@ def init_data():
 
     for obj in allowed_objects.values():
         session.merge(models.DepollueObject(
-            code=obj["id"],
+            id=obj["id"],
             emoji=obj["emoji"],
             name=obj["name"],
             description=obj["description"],

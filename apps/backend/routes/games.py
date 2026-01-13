@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from db.database import SessionLocal
-from apps.backend.db.models.defis_db import Defi
+from db.models.defis_db import Defi
 
 router = APIRouter(prefix="/games", tags=["games"])
 
