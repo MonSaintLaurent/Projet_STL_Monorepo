@@ -39,6 +39,7 @@ def init_data():
             name=p["name"],
             location=p["location"],
             image=p.get("image", "🗺️"),
+            route=p.get("route", ""),
         ))
 
     # --- Objets Depollue

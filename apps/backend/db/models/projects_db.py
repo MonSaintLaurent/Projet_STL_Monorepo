@@ -9,5 +9,6 @@ class Project(Base):
     location = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
     image = Column(String(255), nullable=True)
+    route = Column(String(255), nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

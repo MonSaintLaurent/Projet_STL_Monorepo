@@ -1,38 +1,69 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@heroui/button";
-import projectsData from "@/data/projects.json";
 
 interface ProjectsSectionProps {
   showSearch?: boolean;
 }
 
+interface Project {
+  id: number;
+  name: string;
+  location?: string;
+  description?: string;
+  image?: string;
+  route?: string;
+}
+
 export default function ProjectsSection({ showSearch = true }: ProjectsSectionProps) {
-    const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-    // Filtrer les projets en fonction de la recherche
-    const filteredProjects = projectsData.filter((project) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const res = await fetch("http://localhost:8000/projects/");
+        const data = await res.json();
+        setProjects(data.projects);
+      } catch (err) {
+        console.error("Erreur lors du fetch des projets :", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProjects();
+  }, []);
+
+  // Filtrer les projets en fonction de la recherche
+  const filteredProjects = projects.filter((project) => {
     const query = searchQuery.toLowerCase();
-        return (
-            project.name.toLowerCase().includes(query) ||
-            project.location.toLowerCase().includes(query)
-        );
-    });
-
-    // Fonction pour clear la recherche
-    const clearSearch = () => {
-        setSearchQuery("");
-    };
-  
     return (
+      project.name.toLowerCase().includes(query) ||
+      project.location?.toLowerCase().includes(query)
+    );
+  });
+
+  // Fonction pour clear la recherche
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  if (loading) {
+    return <p>Chargement des projets...</p>;
+  }
+
+  return (
     <div className="projects-section">
       <div className="projects-header">
         <h2 className="projects-title">Projets ({filteredProjects.length})</h2>
         {showSearch && (
           <div className="search-box">
             <span className="search-icon">🔍</span>
-            <input 
-              type="text" 
-              placeholder="Rechercher..." 
+            <input
+              type="text"
+              placeholder="Rechercher..."
               className="search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -59,11 +90,18 @@ export default function ProjectsSection({ showSearch = true }: ProjectsSectionPr
               </div>
               
               {/* Bouton Lancer */}
-              <Button color="primary" 
+              <Button
+                color="primary"
                 className="w-full"
                 size="sm"
+                onPress={() => {
+                  if (project.route) {
+                    window.location.href = project.route;
+                  }
+                }}
+                disabled={!project.route}
               >
-                Lancer
+                {project.route ? "Lancer" : "Bientôt"}
               </Button>
             </div>
           ))

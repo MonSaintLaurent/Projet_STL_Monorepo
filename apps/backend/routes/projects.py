@@ -14,6 +14,8 @@ def get_projects():
             "id": p.id,
             "name": p.name,
             "location": p.location,
+            "description": p.description,
             "image": p.image,
+            "route": p.route,
         } for p in projects
     ]}
