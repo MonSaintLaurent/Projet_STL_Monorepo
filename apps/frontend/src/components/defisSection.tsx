@@ -15,7 +15,7 @@ export default function DefisSection() {
   const [defis, setDefis] = useState<defi[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch les jeux depuis l'API backend
+  // Fetch les défis depuis l'API backend
   useEffect(() => {
     async function fetchDefis() {
       try {
@@ -23,7 +23,7 @@ export default function DefisSection() {
         const data = await res.json();
         setDefis(data.defis);
       } catch (err) {
-        console.error("Erreur lors du fetch des jeux :", err);
+        console.error("Erreur lors du fetch des défis :", err);
       } finally {
         setLoading(false);
       }
@@ -32,7 +32,7 @@ export default function DefisSection() {
   }, []);
 
   if (loading) {
-    return <p>Chargement des jeux...</p>;
+    return <p>Chargement des défis...</p>;
   }
   
   return (

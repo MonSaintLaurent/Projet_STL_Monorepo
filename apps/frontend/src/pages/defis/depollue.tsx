@@ -181,7 +181,7 @@ export default function Depolluedefi() {
   const points_per_pollutants = 100;
   const penalty_allowedObjects = 50;
   const max_time_multiplier = getTimeMultiplier(100);
-  const max_score = 1000; // Normaliser, à voir après mais peut être pratique pour normaliser tous les jeux à 1000 ? Pour qu'lis aient le même poids dans le score user ?
+  const max_score = 1000; // Normaliser, à voir après mais peut être pratique pour normaliser tous les défis à 1000 ? Pour qu'lis aient le même poids dans le score user ?
   const mapMaxScore = currentMap.nb_pollutants * points_per_pollutants * max_time_multiplier; // Score max réel possible, s'adapte au nb de pollutants défini dans le dico de la map
   
   const effectiveTimeLeft = endTimeLeft ?? timeLeft;
@@ -329,7 +329,7 @@ export default function Depolluedefi() {
               size="lg"
               className="bg-purple-600 text-white font-bold hover:bg-purple-700"
               onPress={() => {
-                window.location.href = "/jeux";
+                window.location.href = "/defis";
               }}
             >
               Jouer à un autre Jeu
@@ -342,7 +342,7 @@ export default function Depolluedefi() {
               //   alert("Partager !");
               // }}
               onPress={() => {
-                window.location.href = "/jeux/depollue"; // Actuellement en mode rejouer, TODO à changer après
+                window.location.href = "/defis/depollue"; // Actuellement en mode rejouer, TODO à changer après
               }}
             >
               Partager 🔗

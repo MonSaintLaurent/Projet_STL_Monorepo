@@ -7,7 +7,7 @@
       "description": "Plonge dans ce jeu captivant où ta mission est de purifier le fleuve Saint-Laurent en collectant les éléments nocifs qui menacent son écosystème !",
       "image": "🌊",
       "color": "blue",
-      "route": "/jeux/depollue",
+      "route": "/defis/depollue",
       "objective": "Retirer les objets dangereux pour l'environnement dans le Saint-Laurent"
     },
     {
@@ -16,7 +16,7 @@
       "description": "Explore ce jeu fascinant où tu dois identifier l'endroit où une valeur est présente. Plus tu es proche en naviguant à travers le fleuve Saint-Laurent !",
       "image": "📍",
       "color": "blue",
-      "route": "/jeux/findValue",
+      "route": "/defis/findValue",
       "objective": "Trouve l'emplacement où la vitesse est la plus grande"
     }
   ]
