@@ -421,7 +421,7 @@ export default function Depolluedefi() {
             alignItems: "center",
             borderRadius: 12,
             fontWeight: "bold",
-            fontSize: 20,
+            fontSize: 28,
             boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
             gap: 12,
           }}

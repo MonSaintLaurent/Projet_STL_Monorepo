@@ -232,7 +232,7 @@ export default function FindValuedefi() {
             padding: "10px 20px",
             borderRadius: 12,
             fontWeight: "bold",
-            fontSize: 20,
+            fontSize: 28,
             boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
           }}
         >
