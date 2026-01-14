@@ -31,24 +31,6 @@ export default function ProfilePage() {
   return (
     <DefaultLayout>
       <div className="profile-page">
-        <div className="profile-header-container">
-          <button
-            onClick={() =>
-              logout({
-                logoutParams: { returnTo: window.location.origin + "/login" },
-              })
-            }
-            className="logout-button"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Se déconnecter
-          </button>
-        </div>
-
         <div className="profile-header">
           <img
             src={user.picture || "/src/images/equipe/avatar.png"}
@@ -68,6 +50,30 @@ export default function ProfilePage() {
           {profileStats.map((card, i) => (
             <StatProfile key={i} {...card} />
           ))}
+        </div>
+
+        <div
+          style={{
+            marginTop: 60,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <button
+            onClick={() =>
+              logout({
+                logoutParams: {returnTo: window.location.origin + "/login"},
+              })
+            }
+            className="logout-button"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Se déconnecter
+          </button>
         </div>
       </div>
     </DefaultLayout>
