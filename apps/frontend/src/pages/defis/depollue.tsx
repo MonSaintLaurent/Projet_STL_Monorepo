@@ -34,11 +34,11 @@ type SpawnedObject = {
   object: defiObject; // Emoji et un nom
 };
 
+
 // Générer objets sur la carte
 function generateObjectsOnMap(map: DepollueMap,pollutants: defiObject[], allowedObjects: defiObject[]): SpawnedObject[] {
 
   const {spawn_points, nb_allowedObjects, nb_pollutants} = map;
-
 
   const totalToSpawn = nb_allowedObjects + nb_pollutants;
   if (totalToSpawn > spawn_points.length) {
@@ -88,6 +88,7 @@ export default function Depolluedefi() {
   const deckRef = useRef<any>(null);
 
   const [spawnedObjects, setSpawnedObjects] = useState<SpawnedObject[]>([]);
+  const [allSpawnedObjects, setAllSpawnedObjects] = useState<SpawnedObject[]>([]); // <-- Tous les objets spawnés
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [endTimeLeft, setEndTimeLeft] = useState<number | null>(null);
   const [timeUp, setTimeUp] = useState(false);
@@ -101,6 +102,11 @@ export default function Depolluedefi() {
   const [allowedObjects, setAllowedObjects] = useState<defiObject[]>([]);
 
   const [mapReady, setMapReady] = useState(false);
+
+  // --- Fun facts et infos recyclage
+  const [funFact, setFunFact] = useState<{id: number, fact_type: string, text: string} | null>(null);
+  const [moreInfoVisible, setMoreInfoVisible] = useState(false);
+  const [recyclageFact, setRecyclageFact] = useState<{id: number, fact_type: string, text: string} | null>(null);
 
   // Récupérer l'objectif depuis defis.json
   const defiData = defis.find(d => d.id === 1);
@@ -124,7 +130,7 @@ export default function Depolluedefi() {
       setPollutants(objectsData.pollutants);
       setAllowedObjects(objectsData.allowedObjects);
 
-      setTimeout(() => setMapReady(true), 100); //Marquer map comme prête quand les data sont chargées, sinon erreur console
+      setTimeout(() => setMapReady(true), 100);
     } 
 
     loaddefiData();
@@ -138,6 +144,7 @@ export default function Depolluedefi() {
     const objects = generateObjectsOnMap(currentMap, pollutants, allowedObjects);
 
     setSpawnedObjects(objects);
+    setAllSpawnedObjects(objects); // <-- stocker tous les objets spawnés pour "Plus d'infos"
   }, [currentMap, pollutants, allowedObjects]);
 
 
@@ -167,35 +174,51 @@ export default function Depolluedefi() {
   // Fin de jeu
   function enddefi() {
     if (!timeUp) {
-      setEndTimeLeft(timeLeft); // figer le temps restant
+      setEndTimeLeft(timeLeft);
       setTimeUp(true);
     }
   }
 
-  // Chargement
+  // --- Récupérer fun fact et recyclage quand le jeu est terminé
+  useEffect(() => {
+    if (!timeUp) return;
+
+    async function fetchFunFact() {
+      const res = await fetch("http://localhost:8000/depollue/random-fact?fact_type=funfact");
+      const data = await res.json();
+      setFunFact(data);
+
+      const res2 = await fetch("http://localhost:8000/depollue/random-fact?fact_type=recyclage");
+      const data2 = await res2.json();
+      setRecyclageFact(data2);
+    }
+
+    fetchFunFact();
+  }, [timeUp]);
+
   if (!mapReady || !currentMap || !currentMap.spawn_points || pollutants.length === 0 || allowedObjects.length === 0) {
     return <div>Chargement du jeu...</div>;
   }
 
-  // Score : 100pts par polluants trouvés, 50 pts enlevés par mauvais objet enlevé, et multiplicateur de score suivant le temps restant à la fin de la defi
+  // Score
   const points_per_pollutants = 100;
   const penalty_allowedObjects = 50;
   const max_time_multiplier = getTimeMultiplier(100);
-  const max_score = 1000; // Normaliser, à voir après mais peut être pratique pour normaliser tous les défis à 1000 ? Pour qu'lis aient le même poids dans le score user ?
-  const mapMaxScore = currentMap.nb_pollutants * points_per_pollutants * max_time_multiplier; // Score max réel possible, s'adapte au nb de pollutants défini dans le dico de la map
-  
+  const max_score = 1000;
+  const mapMaxScore = currentMap.nb_pollutants * points_per_pollutants * max_time_multiplier;
+
   const effectiveTimeLeft = endTimeLeft ?? timeLeft;
   const timePercentRemaining = (effectiveTimeLeft / currentMap.timer) * 100;
 
   const multiplicateur = getTimeMultiplier(timePercentRemaining);
 
-  const init_scorePlayer = collectedCount * points_per_pollutants - removedAllowed * penalty_allowedObjects; // Score brut avant ajout du multiplicateur et des malus : nb_objets_polluants*points_polluants - nb_objets_pasPolluantsCliqués*malus_erreur_NonPolluant
-  const scoreWithMultiplier = Math.max(0, init_scorePlayer * multiplicateur); // Score après application du multiplicateur
-  const final_scorePlayer = Math.min(max_score, Math.round((scoreWithMultiplier/Math.max(1, mapMaxScore)) * max_score)); // Score final normalisé vers 1000
+  const init_scorePlayer = collectedCount * points_per_pollutants - removedAllowed * penalty_allowedObjects;
+  const scoreWithMultiplier = Math.max(0, init_scorePlayer * multiplicateur);
+  const final_scorePlayer = Math.min(max_score, Math.round((scoreWithMultiplier/Math.max(1, mapMaxScore)) * max_score));
 
   const progressPercent = Math.min(100, (final_scorePlayer/max_score) * 100);
 
-  // Layer DeckGL pour les emojis
+  // Layer DeckGL
   const objectLayer = new TextLayer({
     id: "object-layer",
     data: spawnedObjects,
@@ -208,20 +231,13 @@ export default function Depolluedefi() {
     getAlignmentBaseline: "center",
     onClick: (info) => {
       if (info.object) {
-        // Supprimer l'objet cliqué
         setSpawnedObjects((prev) =>
           prev.filter((o) => o !== info.object)
         );
-
-        // Si polluant, augmenter compteur
         if (info.object.type === "pollutant") {
           setCollectedCount((prev) => {
             const newCount = prev + 1;
-
-            if (newCount >= currentMap.nb_pollutants) { // Check si tous les polluants sont collectés
-              enddefi();
-            }
-
+            if (newCount >= currentMap.nb_pollutants) enddefi();
             return newCount;
           });
         } else {
@@ -246,6 +262,7 @@ export default function Depolluedefi() {
             justifyContent: "center",
             gap: 32,
             padding: "40px 20px",
+            overflowY: "auto" // <-- permet de scroller si "Plus d'infos" est grand
           }}
         >
           <Objectif objective={objective} mode="fin"/>
@@ -270,7 +287,25 @@ export default function Depolluedefi() {
             </div>
           </div>
 
-          
+          {/* Fun fact */}
+          {funFact && (
+            <div
+              style={{
+                maxWidth: 600,
+                padding: "20px",
+                borderRadius: 12,
+                background: "#fef3c7",
+                color: "#92400e",
+                fontSize: 20,
+                fontWeight: "medium",
+                textAlign: "center",
+                marginBottom: 20,
+              }}
+            >
+              💡 Fun fact : {funFact.text}
+            </div>
+          )}
+
           {/* Score */}
           <div style={{fontSize: 48, fontWeight: "bold", color: "#22c55e"}}>
             {final_scorePlayer}/{max_score} points
@@ -282,27 +317,12 @@ export default function Depolluedefi() {
           </div>
 
           {/* Multiplicateur gris */}
-          <div
-            style={{
-              background: "#f3f4f6",
-              padding: "12px 24px",
-              borderRadius: 8,
-              fontSize: 18,
-            }}
-          >
+          <div style={{background: "#f3f4f6", padding: "12px 24px", borderRadius: 8, fontSize: 18}}>
             <strong>x{multiplicateur.toFixed(2)}</strong> pour avoir fini avec un timer restant de {formatTime(timeLeft)}
           </div>
 
-          {/* Polluants retirés, vert */}
-          <div
-            style={{
-              background: "#dcfce7",
-              padding: "12px 24px",
-              borderRadius: 8,
-              fontSize: 18,
-              color: "#166534",
-            }}
-          >
+          {/* Polluants retirés */}
+          <div style={{background: "#dcfce7", padding: "12px 24px", borderRadius: 8, fontSize: 18, color: "#166534"}}>
             Vous avez retiré <strong>{collectedCount} polluants</strong> du fleuve
           </div>
 
@@ -315,39 +335,53 @@ export default function Depolluedefi() {
 
           {/* Boutons */}
           <div style={{display: "flex", gap: 20, marginTop: 20}}>
-            <Button
-              size="lg"
-              className="bg-gray-300 text-black font-bold hover:bg-gray-400"
-              onPress={() => {
-                window.location.href = "/";
-              }}
-            >
-              Retour à l'accueil
-            </Button>
-
-            <Button
-              size="lg"
-              className="bg-purple-600 text-white font-bold hover:bg-purple-700"
-              onPress={() => {
-                window.location.href = "/defis";
-              }}
-            >
-              Jouer à un autre Jeu
-            </Button>
-
-            <Button
-              size="lg"
-              className="bg-blue-600 text-white font-bold hover:bg-blue-700"
-              // onPress={() => {
-              //   alert("Partager !");
-              // }}
-              onPress={() => {
-                window.location.href = "/defis/depollue"; // Actuellement en mode rejouer, TODO à changer après
-              }}
-            >
-              Partager 🔗
-            </Button>
+            <Button size="lg" className="bg-gray-300 text-black font-bold hover:bg-gray-400" onPress={() => { window.location.href = "/"; }}>Retour à l'accueil</Button>
+            <Button size="lg" className="bg-purple-600 text-white font-bold hover:bg-purple-700" onPress={() => { window.location.href = "/defis"; }}>Jouer à un autre Jeu</Button>
+            <Button size="lg" className="bg-blue-600 text-white font-bold hover:bg-blue-700" onPress={() => { window.location.href = "/defis/depollue"; }}>Partager 🔗</Button>
           </div>
+
+          {/* Bouton Plus d'infos */}
+          <Button size="md" className="bg-yellow-500 text-white font-bold hover:bg-yellow-600" onPress={() => setMoreInfoVisible(!moreInfoVisible)}>
+            {moreInfoVisible ? "Fermer les infos" : "Plus d'infos"}
+          </Button>
+
+          {/* Menu infos */}
+          {moreInfoVisible && (
+            <div
+              style={{
+                maxWidth: 700,
+                marginTop: 16,
+                background: "#f0fdf4",
+                borderRadius: 12,
+                padding: 20,
+                color: "#065f46",
+                fontSize: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                maxHeight: 400,
+                overflowY: "auto" // scroll si trop grand
+              }}
+            >
+              {recyclageFact && <div>{recyclageFact.text}</div>}
+
+              <div>
+                <strong>Objets collectés cette partie :</strong>
+                <ul style={{marginTop: 8, paddingLeft: 20}}>
+                  {allSpawnedObjects.map(o => (
+                    <li key={o.object.id}>
+                      {o.object.emoji} {o.object.name} ({o.type === "pollutant" ? "polluant" : "non polluant"})
+                      {o.object.description && (
+                        <div style={{fontSize: 14, opacity: 0.85}}>
+                          {" — "}{o.object.description}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       </DefaultLayout>
     );
@@ -361,16 +395,15 @@ export default function Depolluedefi() {
           objective={objective}
           mode="jeu"
           style={{
-            position: "fixed", // Hors du flux
-            top: 65,              // hauteur navbar sticky
+            position: "fixed",
+            top: 65,
             left: 20,
-            zIndex: 2000,         // Sur la navbar
+            zIndex: 2000,
           }}
         />
       </div>
       
       <div style={{width: "100%", height: "100%", overflow: "hidden", position: "relative"}}>
-        
         
         {/* Timer + compteur*/}
         <div

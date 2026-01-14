@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from geoalchemy2.shape import to_shape
+import random
 
 from db.database import SessionLocal
 from db.models.depollue_db import DepollueMap, DepollueObject
+from db.models.depollueFact_db import DepollueFact
 
 router = APIRouter(prefix="/depollue", tags=["depollue"])
 
@@ -90,4 +92,29 @@ def get_objects(db: Session = Depends(get_db)):
     return {
         "allowedObjects": allowed_objects,
         "pollutants": pollutants
+    }
+
+# -------- FUN FACTS
+@router.get("/random-fact")
+def get_random_fact(fact_type: str = None, db: Session = Depends(get_db)):
+    """
+    Récupère un fun fact aléatoire
+    - fact_type: optionnel, filtre par type ("funfact" ou "recyclage")
+    """
+    query = db.query(DepollueFact)
+    
+    if fact_type:
+        query = query.filter(DepollueFact.fact_type == fact_type)
+    
+    facts = query.all()
+    
+    if not facts:
+        raise HTTPException(status_code=404, detail="Aucun fun fact trouvé")
+    
+    random_fact = random.choice(facts)
+    
+    return {
+        "id": random_fact.id,
+        "fact_type": random_fact.fact_type,
+        "text": random_fact.text
     }
