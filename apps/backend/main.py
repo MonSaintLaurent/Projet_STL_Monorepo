@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from defis.depollue.routes import router as depollue_router
 from routes.auth import router as auth_router
@@ -31,6 +33,18 @@ app.include_router(projects_router)
 @app.get("/")
 def read_root():
     return {"message": "MonSaintLaurent API v0.1"}
+
+
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "data" / "images" / "defis"
+
+if not STATIC_DIR.exists():
+    print(f"Le dossier {STATIC_DIR} n'existe pas")
+else:
+    print(f"Dossier static trouvé : {STATIC_DIR}")
+
+app.mount("/static/defis", StaticFiles(directory=str(STATIC_DIR)), name="defis")
+
 
 
 if __name__ == "__main__":

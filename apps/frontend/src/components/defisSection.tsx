@@ -1,7 +1,7 @@
 import { Button } from "@heroui/button";
 import { useState, useEffect } from "react";
 
-interface defi {
+interface Defi {
   id: number;
   title: string;
   description: string;
@@ -12,7 +12,7 @@ interface defi {
 }
 
 export default function DefisSection() {
-  const [defis, setDefis] = useState<defi[]>([]);
+  const [defis, setDefis] = useState<Defi[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch les défis depuis l'API backend
@@ -45,32 +45,46 @@ export default function DefisSection() {
       {/* Container des 2 défis du jour */}
       <div className="defis-container">
         <div className="defis-grid">
-          {defis.map((defi) => (
-            <div key={defi.id} className="defi-card">
-              <div className={`defi-image ${defi.color}`}>
-                <div>{defi.image}</div>
+          {defis.map((defi) => {
+            const imageUrl = defi.image 
+              ? `http://localhost:8000/static/defis/${defi.image}`
+              : null;
+
+            return (
+              <div key={defi.id} className="defi-card">
+                <div className={`defi-image ${defi.color}`}>
+                  {imageUrl ? (
+                    <img 
+                      src={imageUrl} 
+                      alt={defi.title}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div>{defi.image}</div>
+                  )}
+                </div>
+                
+                <h2 className="defi-title">{defi.title}</h2>
+                
+                <p className="defi-description">{defi.description}</p>
+                
+                <Button 
+                  color="secondary" 
+                  size="lg"
+                  className="font-bold"
+                  onPress={() =>{
+                    if (defi.route) {
+                      window.location.href = defi.route;
+                    } else {
+                      console.warn(`Aucune route définie pour le jeu "${defi.title}"`);
+                    }
+                  }}
+                >
+                  JOUER
+                </Button>
               </div>
-              
-              <h2 className="defi-title">{defi.title}</h2>
-              
-              <p className="defi-description">{defi.description}</p>
-              
-              <Button 
-                color="secondary" 
-                size="lg"
-                className="font-bold"
-                onPress={() =>{
-                  if (defi.route) {
-                    window.location.href = defi.route;
-                  } else {
-                    console.warn(`Aucune route définie pour le jeu "${defi.title}"`);
-                  }
-                }}
-              >
-                JOUER
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ defis_data = [
         "defi_type": "",
         "difficulty": "medium",
         "max_score": 1000,
-        "image": "🌊",
+        "image": "depollueImage.png",
         "color": "blue",
         "route": "/defis/depollue",
         "objective": "Retire les objets polluants du fleuve !"
