@@ -58,14 +58,14 @@
 }
 
 /* Carte d'affichage de jeu */
-.game-card {
+.defi-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-.game-image {
+.defi-image {
   width: 100%;
   aspect-ratio: 1;
   border-radius: 1rem;
@@ -77,28 +77,28 @@
   font-size: 3.75rem;
 }
 
-.game-image.blue {
+.defi-image.blue {
   background: linear-gradient(to bottom right, #bfdbfe, #93c5fd);
 }
 
-.game-image.pink {
+.defi-image.pink {
   background: linear-gradient(to bottom right, #fbcfe8, #fca5a5);
 }
 
-.game-title {
+.defi-title {
   font-size: 1.25rem;
   font-weight: bold;
   margin-bottom: 0.75rem;
 }
 
-.game-description {
+.defi-description {
   font-size: 0.875rem;
   color: #4b5563;
   margin-bottom: 1rem;
   padding: 0 1rem;
 }
 
-.dark .game-description {
+.dark .defi-description {
   color: #9ca3af;
 }
 

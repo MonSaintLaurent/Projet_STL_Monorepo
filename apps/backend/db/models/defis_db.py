@@ -7,7 +7,7 @@ class Defi(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
-    game_type = Column(Text, nullable=True)
+    defi_type = Column(Text, nullable=True)
     difficulty = Column(Text, nullable=False)
     max_score = Column(Integer, nullable=False)
     image = Column(String(255), nullable=True)

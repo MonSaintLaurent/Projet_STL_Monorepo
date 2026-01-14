@@ -1,11 +1,11 @@
 import DefaultLayout from "@/layouts/default";
 import DefisSection from "@/components/defisSection";
-import "@/styles/games.css";
+import "@/styles/defis.css";
 
-export default function GamesPage() {
+export default function DefisPage() {
   return (
     <DefaultLayout>
-      <section className="games-page">
+      <section className="defis-page">
         
         {/* Section défi, reprise du component */}
         <DefisSection />

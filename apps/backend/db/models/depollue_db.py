@@ -12,7 +12,7 @@ class DepollueMap(Base):
 
     name = Column(String(255), nullable=False)
 
-    # Gameplay
+    # defiplay
     timer = Column(Integer, nullable=False)
     nb_pollutants = Column(Integer, nullable=False)
     nb_allowed_objects = Column(Integer, nullable=False)

@@ -9,11 +9,11 @@ import ErrorPage from "./pages/error";
 import IndexPage from "@/pages/index";
 import AboutPage from "@/pages/about";
 import ProjectsPage from "@/pages/projects";
-import GamesPage from "@/pages/games";
+import DefisPage from "@/pages/defis";
 import LoginPage from "@/pages/login";
 import ProfilePage from "@/pages/profile";
-import FindValueGame from "./pages/games/findValue";
-import DepollueGame from "./pages/games/depollue";
+import FindValuedefi from "./pages/defis/findValue";
+import Depolluedefi from "./pages/defis/depollue";
 
 function App() {
   const {isLoading, error, isAuthenticated, user, getAccessTokenSilently} = useAuth0();
@@ -64,9 +64,9 @@ function App() {
       <Route element={<IndexPage />} path="/" />
       <Route element={<AboutPage />} path="/about" />
       <Route element={<ProjectsPage />} path="/projets" />
-      <Route element={<GamesPage />} path="/jeux" />
-      <Route element={<FindValueGame />} path="/jeux/findValue" />
-      <Route element={<DepollueGame />} path="/jeux/depollue" />
+      <Route element={<DefisPage />} path="/defis" />
+      <Route element={<FindValuedefi />} path="/defis/findValue" />
+      <Route element={<Depolluedefi />} path="/defis/depollue" />
       <Route element={<LoginPage />} path="/login" />
       <Route element={<ProfilePage />} path="/profile" />
       <Route element={<LoadingPage />} path="/callback" />

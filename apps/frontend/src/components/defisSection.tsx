@@ -1,7 +1,7 @@
 import { Button } from "@heroui/button";
 import { useState, useEffect } from "react";
 
-interface Game {
+interface defi {
   id: number;
   title: string;
   description: string;
@@ -12,23 +12,23 @@ interface Game {
 }
 
 export default function DefisSection() {
-  const [games, setGames] = useState<Game[]>([]);
+  const [defis, setDefis] = useState<defi[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch les jeux depuis l'API backend
   useEffect(() => {
-    async function fetchGames() {
+    async function fetchDefis() {
       try {
-        const res = await fetch("http://localhost:8000/games/"); // Endpoint backend
+        const res = await fetch("http://localhost:8000/defis/"); // Endpoint backend
         const data = await res.json();
-        setGames(data.games);
+        setDefis(data.defis);
       } catch (err) {
         console.error("Erreur lors du fetch des jeux :", err);
       } finally {
         setLoading(false);
       }
     }
-    fetchGames();
+    fetchDefis();
   }, []);
 
   if (loading) {
@@ -45,25 +45,25 @@ export default function DefisSection() {
       {/* Container des 2 défis du jour */}
       <div className="defis-container">
         <div className="defis-grid">
-          {games.map((game) => (
-            <div key={game.id} className="game-card">
-              <div className={`game-image ${game.color}`}>
-                <div>{game.image}</div>
+          {defis.map((defi) => (
+            <div key={defi.id} className="defi-card">
+              <div className={`defi-image ${defi.color}`}>
+                <div>{defi.image}</div>
               </div>
               
-              <h2 className="game-title">{game.title}</h2>
+              <h2 className="defi-title">{defi.title}</h2>
               
-              <p className="game-description">{game.description}</p>
+              <p className="defi-description">{defi.description}</p>
               
               <Button 
                 color="secondary" 
                 size="lg"
                 className="font-bold"
                 onPress={() =>{
-                  if (game.route) {
-                    window.location.href = game.route;
+                  if (defi.route) {
+                    window.location.href = defi.route;
                   } else {
-                    console.warn(`Aucune route définie pour le jeu "${game.title}"`);
+                    console.warn(`Aucune route définie pour le jeu "${defi.title}"`);
                   }
                 }}
               >

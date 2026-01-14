@@ -1,4 +1,4 @@
-.game-fullscreen {
+.defi-fullscreen {
   position: fixed;
   top: 0;
   left: 0;
@@ -8,7 +8,7 @@
   z-index: 1000;
 }
 
-.game-loading {
+.defi-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,7 +18,7 @@
 }
 
 /* HUD */
-.game-hud {
+.defi-hud {
   position: absolute;
   top: 20px;
   left: 50%;
@@ -29,7 +29,7 @@
   gap: 0;
 }
 
-.game-objective-badge {
+.defi-objective-badge {
   background-color: #1e40af;
   color: white;
   padding: 1.5rem 2rem;
@@ -39,7 +39,7 @@
   letter-spacing: 0.1em;
 }
 
-.game-objective-text {
+.defi-objective-text {
   background-color: #2563eb;
   color: white;
   padding: 1.5rem 2rem;
@@ -48,7 +48,7 @@
   text-align: center;
 }
 
-.game-timer {
+.defi-timer {
   background-color: white;
   color: #2563eb;
   padding: 1.5rem 2rem;
@@ -60,7 +60,7 @@
 }
 
 /* Légende */
-.game-legend {
+.defi-legend {
   position: absolute;
   bottom: 120px;
   right: 30px;
@@ -108,7 +108,7 @@
 }
 
 /* Bouton valider */
-.game-validate-btn {
+.defi-validate-btn {
   position: absolute;
   bottom: 30px;
   right: 30px;
@@ -125,19 +125,19 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.game-validate-btn:hover {
+.defi-validate-btn:hover {
   background-color: #d1d5db;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.game-validate-btn:active {
+.defi-validate-btn:active {
   background-color: #2563eb;
   color: white;
 }
 
 /* Résultat */
-.game-result-modal {
+.defi-result-modal {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -151,7 +151,7 @@
   min-width: 400px;
 }
 
-.game-result-modal h2 {
+.defi-result-modal h2 {
   font-size: 2rem;
   margin: 0 0 1.5rem 0;
   color: #111827;
@@ -164,7 +164,7 @@
   margin: 1rem 0;
 }
 
-.game-result-modal p {
+.defi-result-modal p {
   font-size: 1.25rem;
   margin: 0.5rem 0;
   color: #374151;

@@ -1,5 +1,5 @@
 // Version 0 : timer ok, légende ok, max ok, gestion par dico des différents niveaux pour le futur ok,
-// Mais il faudra gérer les cartes par le BACKEND (actuellement front, dans src/data), gérer la réponse du joueur (actuellement affiche le point sélectionné), améliorer la page de fin de game (image de la carte + "vous êtes à x de la rpéonse" dans le cas d'une fin de jeu via temps écoulé)
+// Mais il faudra gérer les cartes par le BACKEND (actuellement front, dans src/data), gérer la réponse du joueur (actuellement affiche le point sélectionné), améliorer la page de fin de defi (image de la carte + "vous êtes à x de la rpéonse" dans le cas d'une fin de jeu via temps écoulé)
 import { useEffect, useState, useMemo, useRef } from "react";
 import DeckGL from "@deck.gl/react";
 import { GeoJsonLayer } from "@deck.gl/layers";
@@ -38,8 +38,8 @@ const mapsConfig = {
   },
 };
 
-export default function FindValueGame() {
-  const GAME_ID = 2; // Pour la réutilisation écran de fin par ex, ID du jeu
+export default function FindValuedefi() {
+  const defi_ID = 2; // Pour la réutilisation écran de fin par ex, ID du jeu
 
   const [currentMap, setCurrentMap] = useState<1 | 2>(1); // Choix carte/niveau
   const [geojsonData, setGeojsonData] = useState<any>(null);
@@ -55,7 +55,7 @@ export default function FindValueGame() {
   const [timeLeft, setTimeLeft] = useState<number>(mapConfig.timer);
   const [timeUp, setTimeUp] = useState(false);
 
-  const resetGame = () => {
+  const resetdefi = () => {
     setSelectedPoint(null);
     setTimeUp(false);
     setTimeLeft(mapConfig.timer);
@@ -197,7 +197,7 @@ export default function FindValueGame() {
             <Button
               size="lg"
               className="bg-green-500 text-white font-bold hover:bg-green-600"
-              onPress={resetGame}
+              onPress={resetdefi}
             >
               Réessayer
             </Button>

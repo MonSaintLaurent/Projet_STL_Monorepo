@@ -5,21 +5,21 @@ interface ObjectifProps {
 }
 
 export default function Objectif({objective, mode = "jeu", style}: ObjectifProps) {
-  const isGameMode = mode === "jeu";
+  const isdefiMode = mode === "jeu";
   
   return (
     <div
       style={{
-        position: isGameMode ? "relative" : "absolute",
-        top: isGameMode ? 20 : 50,
-        left: isGameMode ? 20 : 30,
+        position: isdefiMode ? "relative" : "absolute",
+        top: isdefiMode ? 20 : 50,
+        left: isdefiMode ? 20 : 30,
         transform: "none",
-        zIndex: isGameMode ? 1001 : "auto",
+        zIndex: isdefiMode ? 1001 : "auto",
         display: "flex",
         gap: 8,
         alignItems: "center",
         pointerEvents: "none",
-        marginBottom: isGameMode ? 0 : 40,
+        marginBottom: isdefiMode ? 0 : 40,
         ...style,
       }}
     >
@@ -28,10 +28,10 @@ export default function Objectif({objective, mode = "jeu", style}: ObjectifProps
         style={{
           background: "#1e6ba8",
           color: "white",
-          padding: isGameMode ? "14px 32px" : "16px 40px",
+          padding: isdefiMode ? "14px 32px" : "16px 40px",
           borderRadius: "30px",
           fontWeight: "bold",
-          fontSize: isGameMode ? 18 : 24,
+          fontSize: isdefiMode ? 18 : 24,
           boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           whiteSpace: "nowrap",
         }}
@@ -44,12 +44,12 @@ export default function Objectif({objective, mode = "jeu", style}: ObjectifProps
         style={{
           background: "#1e6ba8",
           color: "white",
-          padding: isGameMode ? "14px 36px" : "16px 44px",
+          padding: isdefiMode ? "14px 36px" : "16px 44px",
           borderRadius: "30px",
           fontWeight: "500",
-          fontSize: isGameMode ? 18 : 24,
+          fontSize: isdefiMode ? 18 : 24,
           boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          maxWidth: isGameMode ? "700px" : "900px",
+          maxWidth: isdefiMode ? "700px" : "900px",
         }}
       >
         {objective}

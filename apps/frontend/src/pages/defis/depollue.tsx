@@ -6,7 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import {TextLayer} from "@deck.gl/layers";
 import {Button} from "@heroui/button";
 import DefaultLayout from "@/layouts/default";
-import {games} from "@/data/games.json"
+import {defis} from "@/data/defis.json"
 import Objectif from "@/components/objective";
 
 type DepollueMap = {
@@ -19,7 +19,7 @@ type DepollueMap = {
   spawn_points: [number, number][];
 };
 
-type GameObject = {
+type defiObject = {
   id: string;
   emoji: string;
   name: string;
@@ -31,11 +31,11 @@ type GameObject = {
 type SpawnedObject = {
   position: [number, number];
   type: "pollutant" | "allowed";
-  object: GameObject; // Emoji et un nom
+  object: defiObject; // Emoji et un nom
 };
 
 // Générer objets sur la carte
-function generateObjectsOnMap(map: DepollueMap,pollutants: GameObject[], allowedObjects: GameObject[]): SpawnedObject[] {
+function generateObjectsOnMap(map: DepollueMap,pollutants: defiObject[], allowedObjects: defiObject[]): SpawnedObject[] {
 
   const {spawn_points, nb_allowedObjects, nb_pollutants} = map;
 
@@ -84,7 +84,7 @@ function getTimeMultiplier(percentRemaining: number) {
 }
 
 
-export default function DepollueGame() {
+export default function Depolluedefi() {
   const deckRef = useRef<any>(null);
 
   const [spawnedObjects, setSpawnedObjects] = useState<SpawnedObject[]>([]);
@@ -97,17 +97,19 @@ export default function DepollueGame() {
   const [maps, setMaps] = useState<DepollueMap[]>([]);
   const [currentMap, setCurrentMap] = useState<DepollueMap | null>(null);
 
-  const [pollutants, setPollutants] = useState<GameObject[]>([]);
-  const [allowedObjects, setAllowedObjects] = useState<GameObject[]>([]);
+  const [pollutants, setPollutants] = useState<defiObject[]>([]);
+  const [allowedObjects, setAllowedObjects] = useState<defiObject[]>([]);
 
-  // Récupérer l'objectif depuis games.json
-  const gameData = games.find(g => g.id === 1);
-  const objective = gameData?.objective || "Retirer les objets dangereux pour l'environnement dans le Saint-Laurent";
+  const [mapReady, setMapReady] = useState(false);
+
+  // Récupérer l'objectif depuis defis.json
+  const defiData = defis.find(d => d.id === 1);
+  const objective = defiData?.objective || "Retirer les objets dangereux pour l'environnement dans le Saint-Laurent";
 
 
   // Load maps et objets
   useEffect(() => {
-    async function loadGameData() {
+    async function loaddefiData() {
       const [mapsRes, objectsRes] = await Promise.all([
         fetch("http://localhost:8000/depollue/maps"),
         fetch("http://localhost:8000/depollue/objects"),
@@ -121,9 +123,11 @@ export default function DepollueGame() {
 
       setPollutants(objectsData.pollutants);
       setAllowedObjects(objectsData.allowedObjects);
-    }
 
-    loadGameData();
+      setTimeout(() => setMapReady(true), 100); //Marquer map comme prête quand les data sont chargées, sinon erreur console
+    } 
+
+    loaddefiData();
   }, []);
 
 
@@ -161,7 +165,7 @@ export default function DepollueGame() {
 
 
   // Fin de jeu
-  function endGame() {
+  function enddefi() {
     if (!timeUp) {
       setEndTimeLeft(timeLeft); // figer le temps restant
       setTimeUp(true);
@@ -169,11 +173,11 @@ export default function DepollueGame() {
   }
 
   // Chargement
-  if (!currentMap || !currentMap.spawn_points || pollutants.length === 0 || allowedObjects.length === 0) {
+  if (!mapReady || !currentMap || !currentMap.spawn_points || pollutants.length === 0 || allowedObjects.length === 0) {
     return <div>Chargement du jeu...</div>;
   }
 
-  // Score : 100pts par polluants trouvés, 50 pts enlevés par mauvais objet enlevé, et multiplicateur de score suivant le temps restant à la fin de la game
+  // Score : 100pts par polluants trouvés, 50 pts enlevés par mauvais objet enlevé, et multiplicateur de score suivant le temps restant à la fin de la defi
   const points_per_pollutants = 100;
   const penalty_allowedObjects = 50;
   const max_time_multiplier = getTimeMultiplier(100);
@@ -215,7 +219,7 @@ export default function DepollueGame() {
             const newCount = prev + 1;
 
             if (newCount >= currentMap.nb_pollutants) { // Check si tous les polluants sont collectés
-              endGame();
+              enddefi();
             }
 
             return newCount;
@@ -251,7 +255,7 @@ export default function DepollueGame() {
             <div style={{textAlign: "center" }}>
               <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Déchets</div>
               <div style={{display: "flex", gap: 15, fontSize: 40 }}>
-                {pollutants.map((obj: GameObject, idx: number) => (
+                {pollutants.map((obj: defiObject, idx: number) => (
                   <span key={idx}>{obj.emoji}</span>
                 ))}
               </div>
@@ -259,7 +263,7 @@ export default function DepollueGame() {
             <div style={{textAlign: "center" }}>
               <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Poissons</div>
               <div style={{display: "flex", gap: 15, fontSize: 40}}>
-                {allowedObjects.map((obj: GameObject, idx: number) => (
+                {allowedObjects.map((obj: defiObject, idx: number) => (
                   <span key={idx}>{obj.emoji}</span>
                 ))}
               </div>
@@ -393,33 +397,35 @@ export default function DepollueGame() {
         </div>
 
         <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 40, background: "white", zIndex: 1500}} />
-        <DeckGL
-          ref={deckRef}
-          initialViewState={currentMap.initial_view_state}
-          controller={false}
-          getCursor={() => 'pointer'}
-          layers={[objectLayer]}
-          style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%"}}
-        >
-          <Map
-            mapLib={maplibregl}
-            mapStyle={{
-              version: 8,
-              sources: {
-                osm: {
-                  type: "raster",
-                  tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-                  tileSize: 256,
-                  attribution: "&copy; OpenStreetMap Contributors",
-                  maxzoom: 19,
+        {mapReady && (
+          <DeckGL
+            ref={deckRef}
+            initialViewState={currentMap.initial_view_state}
+            controller={false}
+            getCursor={() => 'pointer'}
+            layers={[objectLayer]}
+            style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%"}}
+          >
+            <Map
+              mapLib={maplibregl}
+              mapStyle={{
+                version: 8,
+                sources: {
+                  osm: {
+                    type: "raster",
+                    tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                    tileSize: 256,
+                    attribution: "&copy; OpenStreetMap Contributors",
+                    maxzoom: 19,
+                  },
                 },
-              },
-              layers: [
-                {id: "osm", type: "raster", source: "osm", minzoom: 0, maxzoom: 22},
-              ],
-            }}
-          />
-        </DeckGL>
+                layers: [
+                  {id: "osm", type: "raster", source: "osm", minzoom: 0, maxzoom: 22},
+                ],
+              }}
+            />
+          </DeckGL>
+        )}
       </div>
     </DefaultLayout>
   );

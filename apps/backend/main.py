@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from games.depollue.routes import router as depollue_router
+from defis.depollue.routes import router as depollue_router
 from routes.auth import router as auth_router
-from routes.games import router as games_router
+from routes.defis import router as defis_router
 from routes.projects import router as projects_router
 
 
@@ -24,7 +24,7 @@ app.add_middleware(
 
 app.include_router(depollue_router)
 app.include_router(auth_router)
-app.include_router(games_router)
+app.include_router(defis_router)
 app.include_router(projects_router)
 
 

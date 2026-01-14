@@ -59,7 +59,7 @@ init_depollue_data.py
   - les maps
   - les objets polluants
   - les objets autorisés
-- Utilise les fichiers temporaires games/depollue/data.py
+- Utilise les fichiers temporaires defis/depollue/data.py
 - À exécuter UNE FOIS après la création des tables
 - Peut être relancé après un wipe DB
 
@@ -68,7 +68,7 @@ init_depollue_data.py
 JEU DEPOLLUE — TABLES
 ------------------------------
 - depollue_maps :
-  - infos gameplay
+  - infos defiplay
   - centre de la carte (PostGIS)
   - spawn_points stockés en JSONB
 
@@ -97,7 +97,7 @@ Puis sync avec la table user, forme :
   Sinon :
       INSERT nouvel utilisateur
 
-Avec Auth0 = gestion identité + login et DB = profil + gameplay
+Avec Auth0 = gestion identité + login et DB = profil + defiplay
 
 
 

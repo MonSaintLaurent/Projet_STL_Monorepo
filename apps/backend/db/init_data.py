@@ -1,9 +1,9 @@
 from db.database import SessionLocal
 from db import models
 
-from games.data.defis_data import defis_data
-from games.data.projects_data import projects_data
-from games.depollue.data import depollue_maps, pollutants, allowed_objects
+from defis.data.defis_data import defis_data
+from defis.data.projects_data import projects_data
+from defis.depollue.data import depollue_maps, pollutants, allowed_objects
 
 from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
@@ -19,7 +19,7 @@ def init_data():
                 id=g["id"],
                 title=g["title"],
                 description=g["description"],
-                game_type=g["game_type"],
+                defi_type=g["defi_type"],
                 difficulty=g["difficulty"],
                 max_score=g["max_score"],
                 image=g.get("image", ""),

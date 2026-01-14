@@ -77,7 +77,7 @@ def get_objects(db: Session = Depends(get_db)):
 
     for o in objects:
         obj_dict = {
-            "id": o.code,
+            "id": o.id,
             "emoji": o.emoji,
             "name": o.name,
             "description": o.description,
