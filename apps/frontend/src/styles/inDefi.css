@@ -23,52 +23,73 @@
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
   display: flex;
+  z-index: 1000; /* au-dessus de DeckGL */
   align-items: center;
   gap: 0;
 }
 
+/* Badge objectif */
 .defi-objective-badge {
   background-color: #1e40af;
   color: white;
-  padding: 1.5rem 2rem;
-  border-radius: 2rem 0 0 2rem;
+  padding: 10px 20px;
+  border-radius: 1.5rem 0 0 1.5rem;
   font-size: 0.875rem;
   font-weight: bold;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
 }
 
+/* Texte objectif */
 .defi-objective-text {
   background-color: #2563eb;
   color: white;
-  padding: 1.5rem 2rem;
+  padding: 10px 20px;
   font-size: 1rem;
   min-width: 400px;
   text-align: center;
 }
 
+/* Timer */
 .defi-timer {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
   background-color: white;
-  color: #2563eb;
-  padding: 1.5rem 2rem;
-  border-radius: 0 2rem 2rem 0;
-  font-size: 1.25rem;
+  color: black;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 28px;
   font-weight: bold;
   min-width: 120px;
   text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+
+@keyframes pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.3); }
+}
+
+.defi-timer.alert {
+  animation: pulse 1s infinite;
+  background-color: #f87171;
+  color: white;
 }
 
 /* Légende */
 .defi-legend {
   position: absolute;
-  bottom: 120px;
-  right: 30px;
+  bottom: 80px;
+  left: 20px;
+  z-index: 1000;
   background-color: white;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   width: 140px;
 }
 
@@ -110,25 +131,25 @@
 /* Bouton valider */
 .defi-validate-btn {
   position: absolute;
-  bottom: 30px;
-  right: 30px;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
   background-color: #e5e7eb;
   color: #374151;
   border: none;
-  padding: 1.5rem 3rem;
+  padding: 20px 30px;
   border-radius: 1rem;
   font-size: 1.25rem;
   font-weight: bold;
   cursor: pointer;
-  z-index: 10;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .defi-validate-btn:hover {
   background-color: #d1d5db;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
 
 .defi-validate-btn:active {

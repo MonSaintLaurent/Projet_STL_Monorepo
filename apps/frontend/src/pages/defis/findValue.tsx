@@ -9,6 +9,8 @@ import Legend from "@/components/legend";
 import maplibregl from "maplibre-gl";
 import { Button } from "@heroui/button";
 import DefaultLayout from "@/layouts/default";
+import "@/styles/inDefi.css";
+import tickSound from "@/sounds/tick.mp3";
 
 const mapsConfig = {
   1: {
@@ -21,7 +23,7 @@ const mapsConfig = {
       pitch: 0,
       bearing: 0,
     },
-    "timer": 120
+    "timer": 20
   },
 
   2: {
@@ -59,7 +61,24 @@ export default function FindValuedefi() {
     setSelectedPoint(null);
     setTimeUp(false);
     setTimeLeft(mapConfig.timer);
+
+    fetch(mapConfig.geojsonPath)
+    .then((res) => res.json())
+    .then((json) => setGeojsonData(json))
+    .catch((err) => console.error("Erreur fetch GeoJSON:", err)); // Sinon pb plus de points
   };
+
+  const tickAudio = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    tickAudio.current = new Audio(tickSound);
+  }, []);
+
+  useEffect(() => {
+    if (timeLeft <= 10 && timeLeft > 0) {
+      tickAudio.current?.play().catch(() => {});
+    }
+  }, [timeLeft]);
 
   // Logique Timer
   useEffect(() => {
@@ -128,7 +147,7 @@ export default function FindValuedefi() {
 
   // Layers DeckGL
   const layers = useMemo(() => {
-    if (!geojsonData || thresholds.length < 3) return [];
+    if (!geojsonData) return [];
 
     const baseLayer = new GeoJsonLayer({
       id: "geojson-points",
@@ -139,28 +158,23 @@ export default function FindValuedefi() {
       pickable: true,
       getPointRadius: 100,
       getFillColor: (f: any) => {
+        if (!thresholds || thresholds.length < 3) return [0, 0, 255, 200]; // par défaut bleu
         const velocity = f.properties?.velocity?.[timeIndex] ?? 0;
-        if (velocity < thresholds[0]) return [0, 0, 255, 200];     // bleu (0-25%)
-        if (velocity < thresholds[1]) return [0, 255, 0, 200];     // vert (25-50%)
-        if (velocity < thresholds[2]) return [255, 255, 0, 200];   // jaune (50-75%)
-        return [255, 0, 0, 200];                                    // rouge (75%+)
+        if (velocity < thresholds[0]) return [0, 0, 255, 200];
+        if (velocity < thresholds[1]) return [0, 255, 0, 200];
+        if (velocity < thresholds[2]) return [255, 255, 0, 200];
+        return [255, 0, 0, 200];
       },
       onClick: (info: any) => {
-        if (info.object) {
-          setSelectedPoint(info.object); // <-- stocke le point sélectionné
-        }
+        if (info.object) setSelectedPoint(info.object);
       },
     });
 
-    // Layer pour afficher le point sélectionné en noir, TODO check pour voir si mieux ou plus gros à faire
     const selectionLayer =
       selectedPoint &&
       new GeoJsonLayer({
         id: "selection-layer",
-        data: {
-          type: "FeatureCollection",
-          features: [selectedPoint],
-        },
+        data: { type: "FeatureCollection", features: [selectedPoint] },
         pointType: "circle",
         filled: true,
         stroked: true,
@@ -170,72 +184,46 @@ export default function FindValuedefi() {
         lineWidthMinPixels: 2,
       });
 
-    return selectionLayer ? [baseLayer, selectionLayer] : [baseLayer]; 
+    return selectionLayer ? [baseLayer, selectionLayer] : [baseLayer];
   }, [geojsonData, thresholds, selectedPoint]);
+
 
   if (timeUp) {
     return (
       <DefaultLayout fullScreen>
-        <div
-          style={{
-            width: "100vw",
-            height: "100vh",
-            background: "white",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 24,
-          }}
-        >
-          <div style={{ fontSize: 48, fontWeight: "bold" }}>
-            ⏰ Temps écoulé !
-          </div>
+        <div className="defi-fullscreen">
+          {/* Modal central */}
+          <div className="defi-result-modal">
+            <h2>⏰ Temps écoulé !</h2>
+            <p>
+              Vous êtes à{" "}
+              {selectedPoint
+                ? selectedPoint.properties.velocity[timeIndex].toFixed(2)
+                : "X"}{" "}
+              m/s de la réponse.
+            </p>
 
-          <div style={{ display: "flex", gap: 16 }}>
-            {/* Réessayer */}
-            <Button
-              size="lg"
-              className="bg-green-500 text-white font-bold hover:bg-green-600"
-              onPress={resetdefi}
-            >
-              Réessayer
-            </Button>
-
-            {/* Accueil */}
-            <Button
-              size="lg"
-              className="bg-gray-300 text-black font-bold hover:bg-gray-400"
-              onPress={() => {
-                window.location.href = "/";
-              }}
-            >
-              Accueil
-            </Button>
+            <div className="result-buttons">
+              <button onClick={resetdefi}>Réessayer</button>
+              <button
+                onClick={() => {
+                  window.location.href = "/";
+                }}
+              >
+                Accueil
+              </button>
+            </div>
           </div>
         </div>
       </DefaultLayout>
     );
   }
 
+
   return (
     <DefaultLayout fullScreen>
       <div style={{width: "100vw", height: "100vh", position: "relative"}}>
-        <div
-          style={{
-            position: "absolute",
-            top: 20,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 1000,
-            background: "white",
-            padding: "10px 20px",
-            borderRadius: 12,
-            fontWeight: "bold",
-            fontSize: 28,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-          }}
-        >
+        <div className={`defi-timer ${timeLeft <= 10 ? 'alert' : ''}`}>
           ⏱️ {formatTime(timeLeft)}
         </div>
 
@@ -243,7 +231,7 @@ export default function FindValuedefi() {
           ref={deckRef}
           initialViewState={mapConfig.initialViewState}
           controller={true}
-          layers={layers}
+          layers={geojsonData ? layers : []}  // asser que si geojsonData est prêt
           style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%" }}
           getTooltip={({ object }) => {
             if (!object) return null;

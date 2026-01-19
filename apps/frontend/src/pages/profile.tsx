@@ -62,7 +62,7 @@ export default function ProfilePage() {
           <button
             onClick={() =>
               logout({
-                logoutParams: {returnTo: window.location.origin + "/login"},
+                logoutParams: {returnTo: window.location.origin + "/"},
               })
             }
             className="logout-button"
