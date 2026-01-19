@@ -12,36 +12,9 @@ import DefaultLayout from "@/layouts/default";
 import "@/styles/inDefi.css";
 import tickSound from "@/sounds/tick.mp3";
 
-const mapsConfig = {
-  1: {
-    name: "Carte 1 - Vitesse t=1",
-    geojsonPath: "/data/points_v4_allveltime.geojson",
-    initialViewState: {
-      longitude: -70.9082,
-      latitude: 47.0139,
-      zoom: 9,
-      pitch: 0,
-      bearing: 0,
-    },
-    "timer": 20
-  },
-
-  2: {
-    name: "Carte 2 - Ex",
-    geojsonPath: "/data/gngn.geojson",
-    initialViewState: {
-      longitude: -73.5617,
-      latitude: 45.5089,
-      zoom: 11,
-      pitch: 0,
-      bearing: 0,
-    },
-    "timer": 90
-  },
-};
-
 export default function FindValuedefi() {
-  const defi_ID = 2; // Pour la réutilisation écran de fin par ex, ID du jeu
+  const [maps, setMaps] = useState<any[]>([]);
+  const [currentMapId, setCurrentMapId] = useState<number>(maps[0]?.id ?? 1);
 
   const [currentMap, setCurrentMap] = useState<1 | 2>(1); // Choix carte/niveau
   const [geojsonData, setGeojsonData] = useState<any>(null);
@@ -49,24 +22,52 @@ export default function FindValuedefi() {
   const [maxDisplay, setMaxDisplay] = useState<number>(0);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
 
+  const mapConfig = maps.find(m => m.id === currentMapId);
+  
   const deckRef = useRef<any>(null);
-  const timeIndex = 1; // t=1, fixe, à voir avec slider de Richard après
 
-  const mapConfig = mapsConfig[currentMap];
-
-  const [timeLeft, setTimeLeft] = useState<number>(mapConfig.timer);
+  const [timeLeft, setTimeLeft] = useState(mapConfig?.timer ?? 90);
   const [timeUp, setTimeUp] = useState(false);
+
+  // Contrer bug des points qui ne s'affichent plus avec une key pour reset le composant DeckGL correctement
+  const [deckKey, setDeckKey] = useState(0);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/data/findvalue/maps")
+      .then(res => res.json())
+      .then(json => {
+        setMaps(json);
+
+        if (json.length > 0) {
+          const firstMap = json[0];
+          setCurrentMapId(firstMap.id);       // init currentMapId
+          setTimeLeft(firstMap.timer);        // init timer depuis DB
+          setThresholds(firstMap.thresholds); // init seuils depuis DB
+        }
+      })
+      .catch(err => console.error("Erreur fetch maps:", err));
+  }, []);
+
 
   const resetdefi = () => {
     setSelectedPoint(null);
     setTimeUp(false);
-    setTimeLeft(mapConfig.timer);
 
-    fetch(mapConfig.geojsonPath)
-    .then((res) => res.json())
-    .then((json) => setGeojsonData(json))
-    .catch((err) => console.error("Erreur fetch GeoJSON:", err)); // Sinon pb plus de points
+    // retrouver la map actuelle
+    const map = maps.find(m => m.id === currentMapId);
+    if (map) {
+      setTimeLeft(map.timer);       // reset timer depuis DB
+      setThresholds(map.thresholds); // reset seuils depuis DB
+    }
+
+    setDeckKey(prev => prev + 1);
+
+    fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}`)
+      .then(res => res.json())
+      .then(json => setGeojsonData(json))
+      .catch(err => console.error("Erreur fetch GeoJSON:", err));
   };
+
 
   const tickAudio = useRef<HTMLAudioElement | null>(null);
 
@@ -75,7 +76,7 @@ export default function FindValuedefi() {
   }, []);
 
   useEffect(() => {
-    if (timeLeft <= 10 && timeLeft > 0) {
+    if (mapConfig && timeLeft <= (mapConfig.tick_alert ?? 10) && timeLeft > 0) {
       tickAudio.current?.play().catch(() => {});
     }
   }, [timeLeft]);
@@ -85,7 +86,7 @@ export default function FindValuedefi() {
     if (timeUp) return;
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft((prev: number) => {
         if (prev <= 1) {
           clearInterval(interval);
           setTimeUp(true);
@@ -105,45 +106,16 @@ export default function FindValuedefi() {
   };
 
 
-  // Charger le GeoJSON
+  // Charger les points GeoJSON pour la map actuelle
   useEffect(() => {
-    fetch(mapConfig.geojsonPath)
-      .then((res) => res.json())
-      .then((json) => {
-        setGeojsonData(json);
+    if (!currentMapId) return;
 
-        // Récupérer toutes les velocities pour le temps t
-        const allVelocities = json.features
-          .map((f: any) => f.properties.velocity[timeIndex])
-          .filter((v: number) => v !== undefined && v > 0)
-          .sort((a: number, b: number) => a - b);
+    fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}`)
+      .then(res => res.json())
+      .then(json => setGeojsonData(json))
+      .catch(err => console.error("Erreur chargement GeoJSON:", err));
+  }, [currentMapId]);
 
-        if (allVelocities.length > 0) {
-          // Prendre le 99e percentile comme max visuel (plus de points rouges, et 95e trop de points)
-          const percentile99 = allVelocities[Math.floor(allVelocities.length * 0.995)];
-          const maxAbsolu = allVelocities[allVelocities.length-1];
-          
-          // Pour la légende, on affiche le max absolu
-          setMaxDisplay(maxAbsolu);
-
-          // Vieille version : max fixé à 1.7 ici
-          
-          // Mais pour les thresholds, on utilise le 95e percentile
-          const thresholdsForTime = [
-            percentile99 * 0.25,
-            percentile99 * 0.5,
-            percentile99 * 0.75
-          ];
-          
-          // console.log("99e percentile:", percentile99);
-          // console.log("Max absolu:", maxAbsolu);
-          // console.log("Thresholds:", thresholdsForTime);
-          
-          setThresholds(thresholdsForTime);
-        }
-      })
-      .catch((err) => console.error("Erreur chargement GeoJSON:", err));
-  }, [currentMap]);
 
   // Layers DeckGL
   const layers = useMemo(() => {
@@ -159,7 +131,7 @@ export default function FindValuedefi() {
       getPointRadius: 100,
       getFillColor: (f: any) => {
         if (!thresholds || thresholds.length < 3) return [0, 0, 255, 200]; // par défaut bleu
-        const velocity = f.properties?.velocity?.[timeIndex] ?? 0;
+        const velocity = f.properties?.velocity ?? 0;
         if (velocity < thresholds[0]) return [0, 0, 255, 200];
         if (velocity < thresholds[1]) return [0, 255, 0, 200];
         if (velocity < thresholds[2]) return [255, 255, 0, 200];
@@ -196,18 +168,16 @@ export default function FindValuedefi() {
           <div className="defi-result-modal">
             <h2>⏰ Temps écoulé !</h2>
             <p>
-              Vous êtes à{" "}
-              {selectedPoint
-                ? selectedPoint.properties.velocity[timeIndex].toFixed(2)
-                : "X"}{" "}
-              m/s de la réponse.
+              {mapConfig?.result_phrase
+                ? mapConfig.result_phrase.replace("{velocity}", selectedPoint?.properties.velocity?.toFixed(2) ?? "X")
+                : `Vous êtes à ${selectedPoint?.properties.velocity?.toFixed(2) ?? "X"} m/s de la réponse.`}
             </p>
 
             <div className="result-buttons">
               <button onClick={resetdefi}>Réessayer</button>
               <button
                 onClick={() => {
-                  window.location.href = "/";
+                  window.location.href = mapConfig?.home_url ?? "/";
                 }}
               >
                 Accueil
@@ -223,19 +193,19 @@ export default function FindValuedefi() {
   return (
     <DefaultLayout fullScreen>
       <div style={{width: "100vw", height: "100vh", position: "relative"}}>
-        <div className={`defi-timer ${timeLeft <= 10 ? 'alert' : ''}`}>
+        <div className={`defi-timer ${mapConfig && timeLeft > 0 && timeLeft <= mapConfig.tick_alert ? "alert" : ""}`}>
           ⏱️ {formatTime(timeLeft)}
         </div>
 
         <DeckGL
           ref={deckRef}
-          initialViewState={mapConfig.initialViewState}
+          initialViewState={mapConfig?.initial_view_state}
           controller={true}
           layers={geojsonData ? layers : []}  // asser que si geojsonData est prêt
           style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%" }}
           getTooltip={({ object }) => {
             if (!object) return null;
-            const velocity = object.properties?.velocity?.[timeIndex] ?? 0;
+            const velocity = object.properties?.velocity ?? 0;
             return `Vitesse t=1: ${velocity.toFixed(2)} m/s`;
           }}
         >

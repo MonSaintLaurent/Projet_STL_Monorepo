@@ -5,6 +5,8 @@ from defis.data.defis_data import defis_data
 from defis.data.projects_data import projects_data
 from defis.depollue.data import depollue_maps, pollutants, allowed_objects
 
+from defis.findValue.data import findvalue_maps
+
 from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
 
@@ -98,6 +100,30 @@ def init_data():
             fact_type=fact["fact_type"],
             text=fact["text"]
         ))
+
+    # --- Maps findValue
+    for m in findvalue_maps.values():
+        center = Point(
+            m["initial_view_state"]["longitude"],
+            m["initial_view_state"]["latitude"]
+        )
+
+        # merge = safe si déjà présent
+        session.merge(models.FindValueMap(
+            id=m["id"],
+            name=m["name"],
+            timer=m["timer"],
+            center=from_shape(center, srid=4326),
+            zoom=m["initial_view_state"]["zoom"],
+            geojson_path=m["geojson_path"],
+            threshold1=m.get("threshold1"),
+            threshold2=m.get("threshold2"),
+            threshold3=m.get("threshold3"),
+            tick_alert=m.get("tick_alert", 10),
+            result_phrase=m.get("result_phrase", "Vous êtes à {velocity} m/s de la réponse."),
+            home_url=m.get("home_url", "/"),
+        )
+    )
 
     session.commit()
     session.close()

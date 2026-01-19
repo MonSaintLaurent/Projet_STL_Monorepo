@@ -3,3 +3,5 @@ from .depollue_db import DepollueMap, DepollueObject
 from .projects_db import Project
 from .users_db import User
 from .depollueFact_db import DepollueFact
+from .findValue_db import FindValueMap
+from .findValuePoints_db import FindValuePoint

@@ -8,6 +8,8 @@ from routes.auth import router as auth_router
 from routes.defis import router as defis_router
 from routes.projects import router as projects_router
 
+from defis.findValue.routes import findvalue_router
+
 
 app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 
@@ -28,6 +30,7 @@ app.include_router(depollue_router)
 app.include_router(auth_router)
 app.include_router(defis_router)
 app.include_router(projects_router)
+app.include_router(findvalue_router)
 
 
 @app.get("/")
