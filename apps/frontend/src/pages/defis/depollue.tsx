@@ -8,6 +8,7 @@ import {Button} from "@heroui/button";
 import DefaultLayout from "@/layouts/default";
 import {defis} from "@/data/defis.json"
 import Objectif from "@/components/objective";
+import {useAuth0} from "@auth0/auth0-react";
 
 type DepollueMap = {
   id: number;
@@ -85,6 +86,10 @@ function getTimeMultiplier(percentRemaining: number) {
 
 
 export default function Depolluedefi() {
+  const {isAuthenticated, getAccessTokenSilently} = useAuth0();
+
+  const [sessionId, setSessionId] = useState<number | null>(null);
+
   const deckRef = useRef<any>(null);
 
   const [spawnedObjects, setSpawnedObjects] = useState<SpawnedObject[]>([]);
@@ -137,6 +142,23 @@ export default function Depolluedefi() {
   }, []);
 
 
+  // Créer session si connecté et sinon non
+    useEffect(() => {
+      async function prepareDefi() {
+        if (!defiData) return;
+
+        if (isAuthenticated) {
+          const token = await getAccessTokenSilently();
+          await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          });
+        } 
+      }
+
+      prepareDefi();
+    }, [defiData, isAuthenticated]);
+
   // Générer les objets au montage
   useEffect(() => {
     if (!currentMap || pollutants.length === 0 || allowedObjects.length === 0 || !currentMap.spawn_points) return ;
@@ -179,9 +201,54 @@ export default function Depolluedefi() {
     }
   }
 
-  // --- Récupérer fun fact et recyclage quand le jeu est terminé
+  // --- Soumettre le score si connecté et récupérer fun facts
   useEffect(() => {
     if (!timeUp) return;
+
+    // Calcul du score
+    const effectiveTimeLeft = endTimeLeft ?? timeLeft;
+    const timePercentRemaining = (effectiveTimeLeft / (currentMap?.timer ?? 1)) * 100;
+    const multiplicateur = getTimeMultiplier(timePercentRemaining);
+
+    const points_per_pollutants = 100;
+    const penalty_allowedObjects = 50;
+    const max_time_multiplier = getTimeMultiplier(100);
+    const max_score = 1000;
+    const mapMaxScore = (currentMap?.nb_pollutants ?? 0) * points_per_pollutants * max_time_multiplier;
+
+    const init_scorePlayer = collectedCount * points_per_pollutants - removedAllowed * penalty_allowedObjects;
+    const scoreWithMultiplier = Math.max(0, init_scorePlayer * multiplicateur);
+    const final_scorePlayer = Math.min(max_score, Math.round((scoreWithMultiplier / Math.max(1, mapMaxScore)) * max_score));
+
+    async function submitScore() {
+      if (!isAuthenticated) {
+        console.log("Utilisateur anonyme : score non enregistré");
+        return;
+      }
+
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          defi_id: currentMap?.id,
+          score: final_scorePlayer,
+          time_spent: currentMap?.timer ? currentMap.timer - effectiveTimeLeft : 0,
+          completed: collectedCount >= (currentMap?.nb_pollutants ?? 0),
+          metadata: { collectedCount, removedAllowed, multiplicateur },
+        }),
+      });
+
+      const result = await response.json();
+      if (result.is_new_record) {
+        console.log("Nouveau record !", result.record.best_score);
+      }
+    }
+
+    submitScore();
 
     async function fetchFunFact() {
       const res = await fetch("http://localhost:8000/depollue/random-fact?fact_type=funfact");
@@ -194,13 +261,12 @@ export default function Depolluedefi() {
     }
 
     fetchFunFact();
-  }, [timeUp]);
+  }, [timeUp, isAuthenticated, sessionId, collectedCount, removedAllowed, currentMap, endTimeLeft, timeLeft]);
 
   if (!mapReady || !currentMap || !currentMap.spawn_points || pollutants.length === 0 || allowedObjects.length === 0) {
     return <div>Chargement du jeu...</div>;
   }
 
-  // Score
   const points_per_pollutants = 100;
   const penalty_allowedObjects = 50;
   const max_time_multiplier = getTimeMultiplier(100);
@@ -302,13 +368,17 @@ export default function Depolluedefi() {
                 marginBottom: 20,
               }}
             >
-              💡 Fun fact : {funFact.text}
+              💡 Point info : {funFact.text}
             </div>
           )}
 
           {/* Score */}
           <div style={{fontSize: 48, fontWeight: "bold", color: "#22c55e"}}>
-            {final_scorePlayer}/{max_score} points
+            {isAuthenticated ? (
+              <>{final_scorePlayer}/{max_score} points</>
+            ) : (
+              <>{final_scorePlayer} points (anonyme)</>
+            )}
           </div>
 
           {/* Barre de progression */}
