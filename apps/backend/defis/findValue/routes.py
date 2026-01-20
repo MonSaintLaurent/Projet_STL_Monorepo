@@ -1,8 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import create_engine, text
+from shapely.geometry import shape, mapping
 import json
 import os
 from dotenv import load_dotenv
+from .cache import findvalue_best_points
+from .utils import load_best_point
 
 findvalue_router = APIRouter(prefix="/data/findvalue", tags=["findvalue"])
 
@@ -133,3 +136,109 @@ def get_findvalue_maps():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur récupération maps: {e}")
+    
+
+@findvalue_router.post("/map/{map_id}/validate")
+def validate_point(map_id: int, player_point: dict):
+    """
+    player_point = { "longitude": float, "latitude": float, "time_left": int }
+    Calcule le score basé sur la distance et le temps restant
+    """
+    # Récupérer le point max dans le cache (ou charger si absent)
+    best = findvalue_best_points.get(map_id) or load_best_point(engine, map_id)
+    if not best:
+        raise HTTPException(status_code=404, detail="Best point not found")
+
+    # Calculer distance avec PostGIS
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("""
+                SELECT ST_Distance(
+                    ST_GeogFromText(:player_wkt),
+                    ST_GeogFromText(:best_wkt)
+                ) as distance_m
+            """),
+            {
+                "player_wkt": f"POINT({player_point['longitude']} {player_point['latitude']})",
+                "best_wkt": f"POINT({best['geom']['coordinates'][0]} {best['geom']['coordinates'][1]})"
+            }
+        ).scalar()
+    
+    distance_m = float(result)
+
+    # Récupérer le timer de la map
+    with engine.connect() as conn:
+        map_timer = conn.execute(
+            text("SELECT timer FROM findvalue_maps WHERE id = :map_id"),
+            {"map_id": map_id}
+        ).scalar()
+
+    # Calcul du score de distance (0-700 points)
+    max_distance = 5000  # 5km
+    if distance_m <= 50:
+        distance_score = 700
+    elif distance_m >= max_distance:
+        distance_score = 0
+    else:
+        distance_score = int(700 * (1 - (distance_m - 50) / (max_distance - 50)))
+
+    # Calcul du bonus temps (0-300 points)
+    time_left = player_point.get("time_left", 0)
+    time_percent = (time_left / map_timer) * 100 if map_timer > 0 else 0
+    
+    if time_percent >= 75:
+        time_bonus = 300
+    elif time_percent >= 50:
+        time_bonus = 200
+    elif time_percent >= 25:
+        time_bonus = 100
+    else:
+        time_bonus = 50
+
+    # Score final
+    final_score = distance_score + time_bonus
+
+    return {
+        "won": distance_m <= 50,
+        "distance_m": round(distance_m, 2),
+        "distance_score": distance_score,
+        "time_bonus": time_bonus,
+        "final_score": final_score,
+        "max_score": 1000,
+        "player_point": {"type": "Point", "coordinates": [player_point["longitude"], player_point["latitude"]]},
+        "best_point": best["geom"],
+        "best_velocity": best["velocity"],
+    }
+
+
+@findvalue_router.get("/map/{map_id}/debug")
+def debug_map_stats(map_id: int):
+    """Debug: affiche les stats de vitesse pour une map"""
+    table_name = f"findvalue_points_map_{map_id}"
+    
+    with engine.connect() as conn:
+        stats = conn.execute(
+            text(f"""
+                SELECT 
+                    MAX(velocity) as max_velocity,
+                    MIN(velocity) as min_velocity,
+                    AVG(velocity) as avg_velocity,
+                    COUNT(*) as total_points,
+                    ST_AsGeoJSON((SELECT geom FROM {table_name} ORDER BY velocity DESC LIMIT 1)) as best_point_geom
+                FROM {table_name}
+            """)
+        ).mappings().first()
+    
+    # Vérifier le cache
+    cached = findvalue_best_points.get(map_id)
+    
+    return {
+        "db_stats": {
+            "max_velocity": float(stats["max_velocity"]),
+            "min_velocity": float(stats["min_velocity"]),
+            "avg_velocity": float(stats["avg_velocity"]),
+            "total_points": stats["total_points"],
+            "best_point": json.loads(stats["best_point_geom"])
+        },
+        "cached_best": cached
+    }

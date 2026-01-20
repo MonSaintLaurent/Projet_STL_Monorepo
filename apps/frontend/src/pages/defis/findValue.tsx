@@ -1,5 +1,4 @@
-// Version 0 : timer ok, légende ok, max ok, gestion par dico des différents niveaux pour le futur ok,
-// Mais il faudra gérer les cartes par le BACKEND (actuellement front, dans src/data), gérer la réponse du joueur (actuellement affiche le point sélectionné), améliorer la page de fin de defi (image de la carte + "vous êtes à x de la rpéonse" dans le cas d'une fin de jeu via temps écoulé)
+// Version 1 : Interface de fin améliorée avec image, score basé sur distance + temps
 import { useEffect, useState, useMemo, useRef } from "react";
 import DeckGL from "@deck.gl/react";
 import { GeoJsonLayer } from "@deck.gl/layers";
@@ -29,7 +28,8 @@ export default function FindValuedefi() {
   const [timeLeft, setTimeLeft] = useState(mapConfig?.timer ?? 90);
   const [timeUp, setTimeUp] = useState(false);
 
-  // Contrer bug des points qui ne s'affichent plus avec une key pour reset le composant DeckGL correctement
+  const [validationResult, setValidationResult] = useState<any>(null);
+
   const [deckKey, setDeckKey] = useState(0);
 
   useEffect(() => {
@@ -52,6 +52,7 @@ export default function FindValuedefi() {
   const resetdefi = () => {
     setSelectedPoint(null);
     setTimeUp(false);
+    setValidationResult(null);
 
     // retrouver la map actuelle
     const map = maps.find(m => m.id === currentMapId);
@@ -79,7 +80,7 @@ export default function FindValuedefi() {
     if (mapConfig && timeLeft <= (mapConfig.tick_alert ?? 10) && timeLeft > 0) {
       tickAudio.current?.play().catch(() => {});
     }
-  }, [timeLeft]);
+  }, [timeLeft, mapConfig]);
 
   // Logique Timer
   useEffect(() => {
@@ -161,26 +162,121 @@ export default function FindValuedefi() {
 
 
   if (timeUp) {
+    const imageUrl = "http://localhost:8000/static/defis/findValueImage.png";
+
+    const progressPercent = validationResult 
+      ? Math.min(100, (validationResult.final_score / validationResult.max_score) * 100)
+      : 0;
+
     return (
       <DefaultLayout fullScreen>
-        <div className="defi-fullscreen">
-          {/* Modal central */}
-          <div className="defi-result-modal">
-            <h2>⏰ Temps écoulé !</h2>
-            <p>
-              {mapConfig?.result_phrase
-                ? mapConfig.result_phrase.replace("{velocity}", selectedPoint?.properties.velocity?.toFixed(2) ?? "X")
-                : `Vous êtes à ${selectedPoint?.properties.velocity?.toFixed(2) ?? "X"} m/s de la réponse.`}
+        <div className="defi-fullscreen" style={{backgroundColor: "#f3f4f6"}}>
+          <div className="defi-result-modal" style={{maxWidth: "600px"}}>
+            {/* Badge RÉSULTATS */}
+            <div style={{
+              position: "absolute",
+              top: "-20px",
+              left: "20px",
+              backgroundColor: "#1e40af",
+              color: "white",
+              padding: "8px 24px",
+              borderRadius: "1.5rem",
+              fontSize: "0.875rem",
+              fontWeight: "bold",
+              letterSpacing: "0.05em"
+            }}>
+              RÉSULTATS
+            </div>
+
+            {/* Titre du défi avec image */}
+            <div style={{
+              backgroundColor: "#2563eb",
+              color: "white",
+              padding: "20px",
+              borderRadius: "1.5rem 1.5rem 0 0",
+              fontSize: "1.25rem",
+              fontWeight: "bold",
+              textAlign: "center",
+              marginTop: "20px"
+            }}>
+              {mapConfig?.name || "Trouver l'emplacement ou la vitesse est la plus grande"}
+            </div>
+
+            {/* Image du défi */}
+            {imageUrl && (
+              <div style={{
+                width: "200px",
+                height: "200px",
+                margin: "20px auto",
+                backgroundColor: "#e5e7eb",
+                borderRadius: "1rem",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                <img 
+                  src={imageUrl} 
+                  alt={mapConfig?.name}
+                  style={{width: "100%", height: "100%", objectFit: "cover"}}
+                />
+              </div>
+            )}
+
+            {/* Score */}
+            {validationResult && (
+              <div style={{fontSize: "3rem", fontWeight: "bold", color: "#22c55e", margin: "20px 0"}}>
+                {validationResult.final_score}/{validationResult.max_score} points
+              </div>
+            )}
+
+            {/* Barre de progression */}
+            {validationResult && (
+              <div style={{
+                width: "100%",
+                height: "30px",
+                backgroundColor: "#e5e7eb",
+                borderRadius: "1rem",
+                overflow: "hidden",
+                marginBottom: "20px"
+              }}>
+                <div style={{
+                  width: `${progressPercent}%`,
+                  height: "100%",
+                  background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+                  transition: "width 1s ease-out"
+                }} />
+              </div>
+            )}
+
+            {/* Détails */}
+            <p style={{fontSize: "1rem", color: "#374151", margin: "10px 0"}}>
+              {validationResult 
+                ? `Vous étiez à ${validationResult.distance_m.toFixed(0)} mètres du point d'aujourd'hui`
+                : selectedPoint
+                  ? `Vous avez sélectionné un point à ${selectedPoint?.properties.velocity?.toFixed(2)} m/s`
+                  : "Aucun point sélectionné"
+              }
             </p>
 
-            <div className="result-buttons">
+            {validationResult && (
+              <div style={{fontSize: "0.875rem", color: "#6b7280", marginTop: "10px"}}>
+                <div>📍 Score distance: {validationResult.distance_score} pts</div>
+                <div>⏱️ Bonus temps: {validationResult.time_bonus} pts</div>
+              </div>
+            )}
+
+            {/* Boutons */}
+            <div className="result-buttons" style={{marginTop: "30px"}}>
               <button onClick={resetdefi}>Réessayer</button>
-              <button
-                onClick={() => {
-                  window.location.href = mapConfig?.home_url ?? "/";
-                }}
+              <button onClick={() => window.location.href = mapConfig?.home_url ?? "/"}>
+                Retour à l'accueil
+              </button>
+              <button 
+                style={{backgroundColor: "#2563eb"}}
+                onClick={() => {/* TODO: Partager */}}
               >
-                Accueil
+                Partager 🔗
               </button>
             </div>
           </div>
@@ -199,9 +295,10 @@ export default function FindValuedefi() {
 
         <DeckGL
           ref={deckRef}
+          key={deckKey}
           initialViewState={mapConfig?.initial_view_state}
           controller={true}
-          layers={geojsonData ? layers : []}  // asser que si geojsonData est prêt
+          layers={geojsonData ? layers : []}
           style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%" }}
           getTooltip={({ object }) => {
             if (!object) return null;
@@ -209,7 +306,6 @@ export default function FindValuedefi() {
             return `Vitesse t=1: ${velocity.toFixed(2)} m/s`;
           }}
         >
-          {/* Carte OSM */}
           <Map
             mapLib={maplibregl}
             mapStyle={{
@@ -237,10 +333,9 @@ export default function FindValuedefi() {
         </DeckGL>
 
         {/* Légende */}
-        <div style={{position: "absolute", bottom: 80, left: 20, zIndex: 1000}}>
+        <div style={{position: "absolute", bottom: 140, left: 53, zIndex: 1000}}>
           <Legend
             quantiles={thresholds}
-            // maxDisplay={maxDisplay} // Pas vraiment utile, mais la carte ne s'affiche pas si on omet le const maxDisplay en haut
             colorScale={[
               [0, 0, 255],   // bleu
               [0, 255, 0],   // vert
@@ -251,26 +346,29 @@ export default function FindValuedefi() {
         </div>
 
         {/* Bouton Valider */}
-        <div style={{position: "absolute", bottom: 20, left: 20, zIndex: 1000}}>
+        <div style={{position: "absolute", bottom: 60, left: 20, zIndex: 1000}}>
           <Button
             size="lg"
             disabled={!selectedPoint}
-            className={`
-              font-bold transition-all
-              ${
-                selectedPoint
-                  ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none"
-              }
-            `}
+            className="defi-validate-btn"
             onPress={() => {
-              if (selectedPoint) {
-                alert(
-                  `Vous avez validé le point : ${JSON.stringify(
-                    selectedPoint.properties
-                  )}`
-                );
-              }
+              if (!selectedPoint) return;
+
+              fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}/validate`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                  longitude: selectedPoint.geometry.coordinates[0],
+                  latitude: selectedPoint.geometry.coordinates[1],
+                  time_left: timeLeft
+                })
+              })
+              .then(res => res.json())
+              .then(json => {
+                setTimeUp(true);
+                setValidationResult(json);
+              })
+              .catch(err => console.error("Erreur validation:", err));
             }}
           >
             {selectedPoint ? "VALIDER" : "SÉLECTIONNER UN POINT"}

@@ -83,7 +83,7 @@
 /* Légende */
 .defi-legend {
   position: absolute;
-  bottom: 80px;
+  bottom: 140px;
   left: 20px;
   z-index: 1000;
   background-color: white;
@@ -132,29 +132,40 @@
 .defi-validate-btn {
   position: absolute;
   bottom: 20px;
-  left: 20px;
+  left: 0px;
   z-index: 1000;
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: #9ca3af;
+  color: #f3f4f6;
   border: none;
   padding: 20px 30px;
   border-radius: 1rem;
   font-size: 1.25rem;
   font-weight: bold;
-  cursor: pointer;
+  cursor: not-allowed;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  max-width: 220px;
+  width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.defi-validate-btn:hover {
-  background-color: #d1d5db;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-}
-
-.defi-validate-btn:active {
-  background-color: #2563eb;
+.defi-validate-btn:not(:disabled) {
+  background-color: #10b981;
   color: white;
+  cursor: pointer;
+}
+
+.defi-validate-btn:not(:disabled):hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.defi-validate-btn:not(:disabled):active {
+  background-color: #047857;
+  transform: translateY(0);
 }
 
 /* Résultat */
