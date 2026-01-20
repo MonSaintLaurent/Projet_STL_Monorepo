@@ -10,6 +10,7 @@ import { Button } from "@heroui/button";
 import DefaultLayout from "@/layouts/default";
 import "@/styles/inDefi.css";
 import tickSound from "@/sounds/tick.mp3";
+import {useAuth0} from "@auth0/auth0-react";
 
 export default function FindValuedefi() {
   const [maps, setMaps] = useState<any[]>([]);
@@ -29,6 +30,7 @@ export default function FindValuedefi() {
   const [timeUp, setTimeUp] = useState(false);
 
   const [validationResult, setValidationResult] = useState<any>(null);
+  const {isAuthenticated, getAccessTokenSilently} = useAuth0();
 
   const [deckKey, setDeckKey] = useState(0);
 
@@ -47,6 +49,28 @@ export default function FindValuedefi() {
       })
       .catch(err => console.error("Erreur fetch maps:", err));
   }, []);
+
+  // Créer session si user connecté
+  useEffect(() => {
+    async function prepareDefi() {
+      if (!mapConfig || !isAuthenticated) return;
+
+      try {
+        const token = await getAccessTokenSilently();
+        await fetch(`http://localhost:8000/defi_sessions/start/${mapConfig.id}`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json", 
+            "Authorization": `Bearer ${token}` 
+          },
+        });
+      } catch (err) {
+        console.error("Erreur création session:", err);
+      }
+    }
+
+    prepareDefi();
+  }, [mapConfig, isAuthenticated]);
 
 
   const resetdefi = () => {
@@ -99,6 +123,45 @@ export default function FindValuedefi() {
 
     return () => clearInterval(interval);
   }, [timeUp]);
+
+  // Soumettre le score
+  useEffect(() => {
+    if (!timeUp || !validationResult || !isAuthenticated || !mapConfig) return;
+
+    async function submitScore() {
+      try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            // defi_id: mapConfig.id,
+            defi_id: 2,
+            score: validationResult.final_score,
+            time_spent: mapConfig.timer - timeLeft,
+            completed: validationResult.won,
+            metadata: { 
+              distance_m: validationResult.distance_m,
+              distance_score: validationResult.distance_score,
+              time_bonus: validationResult.time_bonus
+            },
+          }),
+        });
+
+        const result = await response.json();
+        if (result.is_new_record) {
+          console.log("Nouveau record !", result.record.best_score);
+        }
+      } catch (err) {
+        console.error("Erreur soumission score:", err);
+      }
+    }
+
+    submitScore();
+  }, [timeUp, validationResult, isAuthenticated, mapConfig, timeLeft]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
