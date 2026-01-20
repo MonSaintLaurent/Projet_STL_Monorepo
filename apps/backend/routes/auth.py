@@ -8,8 +8,12 @@ from db.database import get_db
 from crud.users import get_user_by_auth0_id, create_user
 from jose import jwt
 from datetime import datetime, timezone
+from typing import Optional
+from pydantic import BaseModel
+from db.models.users_db import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/users", tags=["users"])
 
 ALGORITHMS = ["RS256"]
 API_AUDIENCE = "https://api.monstl.local"
@@ -68,7 +72,7 @@ def sync_user(authorization: str = Header(...), db: Session = Depends(get_db)):
             "is_new": False
         }
 
-    print(f"🆕 DEBUG - Création d'un nouvel utilisateur avec auth0_id: '{sub}'")  # DEBUG
+    print(f"DEBUG - Création d'un nouvel utilisateur avec auth0_id: '{sub}'")  # DEBUG
     
     # Créer un nouvel utilisateur
     new_user = create_user(db, sub, email, name, picture)
@@ -86,3 +90,5 @@ def debug_token(user=Depends(verify_token)):
 @router.get("/protected")
 def protected_route(user=Depends(verify_token)):
     return {"message": "Token valide", "user": user}
+
+

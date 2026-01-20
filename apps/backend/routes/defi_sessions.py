@@ -189,10 +189,16 @@ def finish_defi(
 
 
 # Récupérer records + stats user
-@router.get("/user/{user_id}")
-def get_user_records(user_id: int, db: Session = Depends(get_db)):
-    records = db.query(UserDefiRecord).filter(UserDefiRecord.user_id == user_id).all()
-    stats = db.query(UserStats).filter(UserStats.user_id == user_id).first()
+@router.get("/user/{auth0_id}")
+def get_user_records(auth0_id: str, db: Session = Depends(get_db)):
+    # Récupère l'user par son Auth0 ID(str)
+    user = db.query(User).filter(User.auth0_id == auth0_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    # Récupère les records et stats via user.id (integer)
+    records = db.query(UserDefiRecord).filter(UserDefiRecord.user_id == user.id).all()
+    stats = db.query(UserStats).filter(UserStats.user_id == user.id).first()
 
     return {
         "records": [

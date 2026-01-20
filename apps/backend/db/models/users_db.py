@@ -12,6 +12,8 @@ class User(Base):
     name = Column(String(255), nullable=True)
     picture = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
+    country = Column(String, nullable=True, default="")
+    description = Column(String, nullable=True, default="")
     last_login = Column(TIMESTAMP, nullable=True)
 
     sessions = relationship("DefiSession", back_populates="user")

@@ -9,7 +9,7 @@ from routes.defis import router as defis_router
 from routes.projects import router as projects_router
 from defis.findValue.routes import findvalue_router
 from routes.defi_sessions import router as defi_sessions_router
-
+from routes.users import router as users_router
 
 app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 
@@ -32,6 +32,7 @@ app.include_router(defis_router)
 app.include_router(projects_router)
 app.include_router(findvalue_router)
 app.include_router(defi_sessions_router)
+app.include_router(users_router)
 
 
 @app.get("/")

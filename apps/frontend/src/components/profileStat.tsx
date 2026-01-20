@@ -1,24 +1,13 @@
-import React from "react";
+type StatProfileProps = {
+  title: string;
+  value: string | number;
+};
 
-interface StatCardProps {
-  icon: string;
-  value: string;
-  unit: string;
-  label: string;
-  visible: boolean;
-}
-
-export default function StatProfile({ icon, value, unit, label, visible }: StatCardProps) {
-  if (!visible) return null;
-
+export default function StatProfile({ title, value }: StatProfileProps) {
   return (
     <div className="stat-card">
-      {icon && <div className="stat-icon">{icon}</div>}
-      <div>
-        <p className="stat-value">{value}</p>
-        <p className="stat-unit">{unit}</p>
-      </div>
-      <p className="stat-label">{label}</p>
+      <p className="stat-title">{title}</p>
+      <p className="stat-value">{value}</p>
     </div>
   );
 }
