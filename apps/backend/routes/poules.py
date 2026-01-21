@@ -162,10 +162,12 @@ def get_my_poules(
         status = calculate_poule_status(start_time, end_time)
 
         # Calcul du temps restant
-        if status == "a-venir":
+        if status == "a-venir" and start_time:
             time_remaining = max(0, int((start_time - now).total_seconds()))
-        else:
+        elif status in ["en-cours", "fin-proche"] and end_time:
             time_remaining = max(0, int((end_time - now).total_seconds()))
+        else:
+            time_remaining = 0
 
         # Compter les participants
         participant_count = db.query(PouleParticipant).filter(
@@ -350,39 +352,55 @@ def get_poule_ranking(
             detail="Vous n'êtes pas participant de cette poule"
         )
 
-    # Nombre réel de participants
-    participants_count = db.query(PouleParticipant).filter(
+    # Récupérer tous les participants
+    participants = db.query(PouleParticipant).filter(
         PouleParticipant.poule_id == poule_id
-    ).count()
+    ).all()
 
-    # Récupérer les meilleurs scores pour classement
-    best_scores = (
-        db.query(PouleBestScore)
-        .filter(PouleBestScore.poule_id == poule_id)
-        .order_by(
-            desc(PouleBestScore.best_score),
-            PouleBestScore.best_time_spent
-        )
-        .all()
-    )
+    # Récupérer les meilleurs scores
+    best_scores = db.query(PouleBestScore).filter(
+        PouleBestScore.poule_id == poule_id
+    ).all()
+    best_scores_dict = {score.user_id: score for score in best_scores}
 
+    # Construire le ranking complet
     ranking_data = []
-    for rank, score in enumerate(best_scores, start=1):
-        score.rank = rank 
+    for participant in participants:
+        score = best_scores_dict.get(participant.user_id)
+        if score:
+            best_score = score.best_score
+            best_time = score.best_time_spent
+            last_played_at = score.last_played_at.isoformat()
+            total_attempts = score.total_attempts
+        else:
+            best_score = 0
+            best_time = 0
+            last_played_at = None
+            total_attempts = 0
 
         ranking_data.append({
-            "rank": rank,
-            "user_id": score.user_id,
-            "user_name": score.user.name,
-            "user_picture": score.user.picture,
-            "best_score": score.best_score,
-            "best_time_spent": score.best_time_spent,
-            "total_attempts": score.total_attempts,
-            "last_played_at": score.last_played_at.isoformat(),
-            "is_current_user": score.user_id == user.id
+            "rank": 0, 
+            "user_id": participant.user_id,
+            "user_name": participant.user.name,
+            "user_picture": participant.user.picture,
+            "best_score": best_score,
+            "best_time_spent": best_time,
+            "total_attempts": total_attempts,
+            "last_played_at": last_played_at,
+            "is_current_user": participant.user_id == user.id
         })
 
-    db.commit()
+    # Tri : les joueurs ayant joué d'abord, triés par score décroissant et temps croissant
+    ranking_data.sort(
+        key=lambda x: (x["best_score"] == 0, -x["best_score"], x["best_time_spent"])
+    )
+
+    # Recalculer le rang
+    for i, r in enumerate(ranking_data, start=1):
+        r["rank"] = i
+
+    # Nombre réel de participants
+    participants_count = len(participants)
 
     # Temps restant
     now = datetime.now(timezone.utc)

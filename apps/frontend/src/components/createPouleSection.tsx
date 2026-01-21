@@ -24,16 +24,10 @@ export default function CreatePouleSection({ onBack }: CreatePouleSectionProps) 
   const [startChoice, setStartChoice] = useState("immediat");
 
   const [players, setPlayers] = useState<Player[]>([]);
-  const { friends, loading: friendsLoading } = useFriends();
 
   const { createPoule, loading: creating } = useCreatePoule();
   const { refetch: refetchPoules } = usePoules();
 
-  useEffect(() => {
-    if (!friendsLoading) {
-      setPlayers(friends.map(f => ({ ...f, selected: false })));
-    }
-  }, [friends, friendsLoading]);
 
   const togglePlayer = (playerId: number) => {
     setPlayers(
@@ -170,7 +164,7 @@ export default function CreatePouleSection({ onBack }: CreatePouleSectionProps) 
 
           <UserSearch
             excludeIds={players.map(p => p.id)}
-            onInvite={(user: User) => setPlayers([...players, { ...user, selected: true }])}
+            onInvite={(user: User) => setPlayers([...players, {...user, selected: true}])}
             onAddFriend={(user: User) => console.log("Demande d'ami envoyée à", user.name)}
           />
 

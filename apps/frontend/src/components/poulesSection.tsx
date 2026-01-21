@@ -11,6 +11,8 @@ export default function PoulesSection({onViewDetail, onNavigate}: PoulesSectionP
     const {isAuthenticated, loginWithRedirect} = useAuth0();
     const {poulesEnCours, loading: poulesLoading, refetch} = usePoules();
     const {invitations} = useInvitations();
+    const activePoules = poulesEnCours.filter(p => p.status !== "terminee");
+
 
     // Si non connecté, afficher un message
     if (!isAuthenticated) {
@@ -97,78 +99,78 @@ export default function PoulesSection({onViewDetail, onNavigate}: PoulesSectionP
             <div className="poules-list">
                 <h2 className="list-title">🔥 Poules en cours</h2>
 
-                {poulesEnCours.length === 0 ? (
+                {activePoules.length === 0 ? (
                     <div style={{textAlign: "center", padding: "2rem", color: "#6b7280"}}>
                         Aucune poule en cours. Crée-en une ou accepte une invitation !
                     </div>
-                    ) : (
-                        poulesEnCours.map((poule) => (
-                            <div key={poule.id} className={`poule-card ${poule.status}`}>
-                                <div className="poule-header">
-                                    <h3 className="poule-name">
-                                        <span className="poule-emoji">{poule.emoji}</span>
-                                        {poule.name}
-                                    </h3>
-                                        <span className={`status-badge ${poule.status}`}>
-                                        {poule.status === "en-cours" ? "En cours" : "Fin proche"}
-                                    </span>
+                ) : (
+                    activePoules.map((poule) => (
+                        <div key={poule.id} className={`poule-card ${poule.status}`}>
+                            <div className="poule-header">
+                                <h3 className="poule-name">
+                                    <span className="poule-emoji">{poule.emoji}</span>
+                                    {poule.name}
+                                </h3>
+                                <span className={`status-badge ${poule.status}`}>
+                                    {poule.status === "en-cours" ? "En cours" : "Fin proche"}
+                                </span>
+                            </div>
+
+                            <div className="poule-info">
+                                <div className="info-item">
+                                    <span className="info-icon">⏱️</span>
+                                    <div>
+                                        <div className="info-label">Temps restant</div>
+                                        <div className="info-value">
+                                            <SimpleTimer timeRemainingSeconds={poule.time_remaining_seconds} />
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="poule-info">
-                                    <div className="info-item">
-                                        <span className="info-icon">⏱️</span>
-                                        <div>
-                                            <div className="info-label">Temps restant</div>
-                                            <div className="info-value">
-                                                <SimpleTimer timeRemainingSeconds={poule.time_remaining_seconds} />
-                                            </div>
+                                <div className="info-item">
+                                    <span className="info-icon">👥</span>
+                                    <div>
+                                        <div className="info-label">Participants</div>
+                                        <div className="info-value">
+                                            {poule.participants}/{poule.max_participants}
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div className="info-item">
-                                        <span className="info-icon">👥</span>
-                                        <div>
-                                            <div className="info-label">Participants</div>
-                                            <div className="info-value">
-                                                {poule.participants}/{poule.max_participants}
-                                            </div>
-                                        </div>
+                                <div className="info-item">
+                                    <span className="info-icon">🎮</span>
+                                    <div>
+                                        <div className="info-label">Jeu</div>
+                                        <div className="info-value">{poule.defi_name}</div>
                                     </div>
+                                </div>
 
-                                    <div className="info-item">
-                                        <span className="info-icon">🎮</span>
-                                        <div>
-                                            <div className="info-label">Jeu</div>
-                                            <div className="info-value">{poule.defi_name}</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="info-item">
-                                        <span className="info-icon">🏆</span>
-                                        <div>
-                                            <div className="info-label">Ta position</div>
-                                            <div className="info-value">
-                                                {poule.my_position ? (
-                                                    <>
+                                <div className="info-item">
+                                    <span className="info-icon">🏆</span>
+                                    <div>
+                                        <div className="info-label">Ta position</div>
+                                        <div className="info-value">
+                                            {poule.my_position ? (
+                                                <>
                                                     {poule.my_position}
                                                     {poule.my_position === 1 ? "er" : "ème"}{" "}
                                                     {poule.my_position === 1 && "🔥"}
-                                                    </>
-                                                ) : (
-                                                    "Pas encore joué"
-                                                )}
-                                            </div>
+                                                </>
+                                            ) : (
+                                                "Pas encore joué"
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-
-                                <button
-                                    className="view-ranking-btn"
-                                    onClick={() => onViewDetail(poule.id.toString())}
-                                >
-                                    Voir le classement
-                                </button>
                             </div>
+
+                            <button
+                                className="view-ranking-btn"
+                                onClick={() => onViewDetail(poule.id.toString())}
+                            >
+                                Voir le classement
+                            </button>
+                        </div>
                         )
                     )
                 )}

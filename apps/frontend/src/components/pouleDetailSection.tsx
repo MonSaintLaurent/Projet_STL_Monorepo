@@ -150,18 +150,18 @@ export default function PouleDetailSection({
                                     <div className="player-info">
                                         <div className="player-name">{player.user_name}</div>
                                         <div className="player-status">
-                                            {player.best_score > 0
+                                            {player.last_played_at
                                                 ? `A joué ${formatTimeAgo(player.last_played_at)}`
-                                                : "Pas encore joué"}
+                                                : "N'a pas encore joué aujourd'hui"}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="ranking-right">
                                     <div className="player-points">
-                                        {player.best_score > 0
-                                        ? `${player.best_score} pts`
-                                        : "- pts"}
+                                        {player.last_played_at
+                                            ? `${player.best_score} pts`
+                                            : "- pts"}
                                     </div>
                                 </div>
                             </div>
