@@ -3,12 +3,14 @@ import DeckGL from "@deck.gl/react";
 import {Map} from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import {TextLayer} from "@deck.gl/layers";
+import {IconLayer} from "@deck.gl/layers";
 import {Button} from "@heroui/button";
 import DefaultLayout from "@/layouts/default";
 import {defis} from "@/data/defis.json"
 import Objectif from "@/components/objective";
 import {useAuth0} from "@auth0/auth0-react";
+import {useLocation} from "react-router-dom";
+import PouleEndScreen from "./pouleEndScreen";
 
 type DepollueMap = {
   id: number;
@@ -22,7 +24,7 @@ type DepollueMap = {
 
 type defiObject = {
   id: string;
-  emoji: string;
+  image: string;
   name: string;
   description?: string;
 };
@@ -30,16 +32,21 @@ type defiObject = {
 
 // Type pour un objet spawné
 type SpawnedObject = {
+  id: string;
   position: [number, number];
   type: "pollutant" | "allowed";
-  object: defiObject; // Emoji et un nom
+  object: defiObject; // Image et un nom
 };
 
 
 // Générer objets sur la carte
-function generateObjectsOnMap(map: DepollueMap,pollutants: defiObject[], allowedObjects: defiObject[]): SpawnedObject[] {
+function generateObjectsOnMap(
+  map: DepollueMap,
+  pollutants: defiObject[],
+  allowedObjects: defiObject[]
+): SpawnedObject[] {
 
-  const {spawn_points, nb_allowedObjects, nb_pollutants} = map;
+  const { spawn_points, nb_allowedObjects, nb_pollutants } = map;
 
   const totalToSpawn = nb_allowedObjects + nb_pollutants;
   if (totalToSpawn > spawn_points.length) {
@@ -48,21 +55,39 @@ function generateObjectsOnMap(map: DepollueMap,pollutants: defiObject[], allowed
     );
   }
 
-  const shuffledPoints = [...spawn_points].sort(() => Math.random() - 0.5);
-  const spawnedObjects: SpawnedObject[] = [];
-
-  // Autorisés
-  for (let i = 0; i < nb_allowedObjects; i++) {
-    const point = [...shuffledPoints[i]] as [number, number];
-    const obj = allowedObjects[Math.floor(Math.random() * allowedObjects.length)];
-    spawnedObjects.push({ position: point, type: "allowed", object: obj });
+  if (nb_pollutants > pollutants.length) {
+    throw new Error("Pas assez de polluants uniques disponibles");
   }
 
-  // Polluants
+  if (nb_allowedObjects > allowedObjects.length) {
+    throw new Error("Pas assez d’objets autorisés uniques disponibles");
+  }
+
+  const shuffledPoints = [...spawn_points].sort(() => Math.random() - 0.5);
+
+  const shuffledPollutants = [...pollutants].sort(() => Math.random() - 0.5);
+  const shuffledAllowed = [...allowedObjects].sort(() => Math.random() - 0.5);
+
+  const spawnedObjects: SpawnedObject[] = [];
+
+  // Autorisés, pas de doublons
+  for (let i = 0; i < nb_allowedObjects; i++) {
+    spawnedObjects.push({
+      id: crypto.randomUUID(),
+      position: [...shuffledPoints[i]] as [number, number],
+      type: "allowed",
+      object: shuffledAllowed[i],
+    });
+  }
+
+  // Polluants, pas de doublons
   for (let i = 0; i < nb_pollutants; i++) {
-    const point = [...shuffledPoints[nb_allowedObjects + i]] as [number, number];
-    const obj = pollutants[Math.floor(Math.random() * pollutants.length)];
-    spawnedObjects.push({ position: point, type: "pollutant", object: obj });
+    spawnedObjects.push({
+      id: crypto.randomUUID(),
+      position: [...shuffledPoints[nb_allowedObjects + i]] as [number, number],
+      type: "pollutant",
+      object: shuffledPollutants[i],
+    });
   }
 
   return spawnedObjects;
@@ -108,6 +133,10 @@ export default function Depolluedefi() {
 
   const [mapReady, setMapReady] = useState(false);
 
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const pouleId = params.get("poule_id");
+
   // --- Fun facts et infos recyclage
   const [funFact, setFunFact] = useState<{id: number, fact_type: string, text: string} | null>(null);
   const [moreInfoVisible, setMoreInfoVisible] = useState(false);
@@ -117,6 +146,13 @@ export default function Depolluedefi() {
   const defiData = defis.find(d => d.id === 1);
   const objective = defiData?.objective || "Retirer les objets dangereux pour l'environnement dans le Saint-Laurent";
 
+  const [pouleInfo, setPouleInfo] = useState<{
+    name: string;
+    emoji: string;
+    attempts_left: number;
+    my_rank: number;
+    is_new_best: boolean;
+  } | null>(null);
 
   // Load maps et objets
   useEffect(() => {
@@ -149,10 +185,12 @@ export default function Depolluedefi() {
 
         if (isAuthenticated) {
           const token = await getAccessTokenSilently();
-          await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
+          const response = await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           });
+          const data = await response.json();
+          if (data.session_id) setSessionId(data.session_id);
         } 
       }
 
@@ -201,6 +239,12 @@ export default function Depolluedefi() {
     }
   }
 
+  // Tirage sans doublon objects
+  function shuffle<T>(array: T[]): T[] {
+    return [...array].sort(() => Math.random() - 0.5);
+  }
+
+
   // --- Soumettre le score si connecté et récupérer fun facts
   useEffect(() => {
     if (!timeUp) return;
@@ -227,6 +271,8 @@ export default function Depolluedefi() {
       }
 
       const token = await getAccessTokenSilently();
+
+      // Soumettre score normal
       const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
         method: "POST",
         headers: {
@@ -234,7 +280,7 @@ export default function Depolluedefi() {
           "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
-          defi_id: currentMap?.id,
+          session_id: sessionId,
           score: final_scorePlayer,
           time_spent: currentMap?.timer ? currentMap.timer - effectiveTimeLeft : 0,
           completed: collectedCount >= (currentMap?.nb_pollutants ?? 0),
@@ -243,10 +289,51 @@ export default function Depolluedefi() {
       });
 
       const result = await response.json();
-      if (result.is_new_record) {
-        console.log("Nouveau record !", result.record.best_score);
+      if (result.is_new_record) console.log("Nouveau record !", result.record.best_score);
+
+      // Soumettre score à la poule si pouleId et sessionId existent
+      if (sessionId && pouleId) {
+        try {
+          const res = await fetch("http://localhost:8000/poules/submit-score", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json", 
+              "Authorization": `Bearer ${token}` 
+            },
+            body: JSON.stringify({
+              session_id: sessionId,
+              poule_id: parseInt(pouleId),
+            }),
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            console.error("Impossible de soumettre le score à la poule", data.detail);
+          } else {
+            console.log("Score envoyé à la poule ! Rang actuel :", data.rank);
+            
+            // Récupérer les infos de la poule
+            const pouleRes = await fetch(`http://localhost:8000/poules/${pouleId}/ranking`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            
+            if (pouleRes.ok) {
+              const pouleData = await pouleRes.json();
+              setPouleInfo({
+                name: pouleData.poule.name,
+                emoji: pouleData.poule.emoji,
+                attempts_left: pouleData.poule.attempts_left,
+                my_rank: data.rank,
+                is_new_best: data.is_new_best
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Erreur soumission score poule", err);
+        }
       }
     }
+
 
     submitScore();
 
@@ -285,20 +372,33 @@ export default function Depolluedefi() {
   const progressPercent = Math.min(100, (final_scorePlayer/max_score) * 100);
 
   // Layer DeckGL
-  const objectLayer = new TextLayer({
+  const objectLayer = new IconLayer({
     id: "object-layer",
     data: spawnedObjects,
     pickable: true,
+
+    getId: (d: SpawnedObject) => d.id,
+
     getPosition: (d: SpawnedObject) => d.position,
-    getText: (d: SpawnedObject) => d.object.emoji ?? "❓",
-    getSize: 40,
-    getColor: (d: SpawnedObject) => (d.type === "pollutant" ? [255, 0, 0] : [0, 128, 0]),
-    getTextAnchor: "middle",
-    getAlignmentBaseline: "center",
+
+    getIcon: (d: SpawnedObject) => ({
+      url: `http://localhost:8000/static/depollue/${d.object.image}`,
+      width: 128,
+      height: 128,
+      anchorY: 128,
+    }),
+
+    sizeScale: 1,
+    getSize: 80, // Taille affichage objets sur carte
+    sizeUnits: "pixels",
+    
+
     onClick: (info) => {
       if (info.object) {
+        const clickedId = info.object.id;
+
         setSpawnedObjects((prev) =>
-          prev.filter((o) => o !== info.object)
+          prev.filter((o) => o.id !== clickedId)
         );
         if (info.object.type === "pollutant") {
           setCollectedCount((prev) => {
@@ -315,6 +415,33 @@ export default function Depolluedefi() {
 
   // Render
   if (timeUp) {
+    // Si on est en mode Poule ET qu'on a les infos de la poule
+    if (pouleId && pouleInfo) {
+      return (
+        <DefaultLayout fullScreen>
+          <PouleEndScreen
+            objective={objective}
+            pouleInfo={pouleInfo}
+            score={final_scorePlayer}
+            maxScore={max_score}
+            multiplicateur={multiplicateur}
+            collectedCount={collectedCount}
+            removedAllowed={removedAllowed}
+            timeLeft={effectiveTimeLeft}
+            pollutants={pollutants}
+            allowedObjects={allowedObjects}
+            onReturnToPoule={() => {
+              window.location.href = "/poules";
+            }}
+            onPlayAgain={() => {
+              window.location.reload();
+            }}
+          />
+        </DefaultLayout>
+      );
+    }
+
+    // Mode normal (pas de poule) - écran de fin classique
     return (
       <DefaultLayout fullScreen>
         <div
@@ -339,15 +466,25 @@ export default function Depolluedefi() {
               <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Déchets</div>
               <div style={{display: "flex", gap: 15, fontSize: 40 }}>
                 {pollutants.map((obj: defiObject, idx: number) => (
-                  <span key={idx}>{obj.emoji}</span>
+                  <img
+                    key={idx}
+                    src={`http://localhost:8000/static/depollue/${obj.image}`}
+                    alt={obj.name}
+                    style={{ width: 40, height: 40 }}
+                  />
                 ))}
               </div>
             </div>
             <div style={{textAlign: "center" }}>
-              <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Poissons</div>
+              <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Eléments du fleuve</div>
               <div style={{display: "flex", gap: 15, fontSize: 40}}>
                 {allowedObjects.map((obj: defiObject, idx: number) => (
-                  <span key={idx}>{obj.emoji}</span>
+                  <img
+                    key={idx}
+                    src={`http://localhost:8000/static/depollue/${obj.image}`}
+                    alt={obj.name}
+                    style={{ width: 40, height: 40 }}
+                  />
                 ))}
               </div>
             </div>
@@ -407,7 +544,7 @@ export default function Depolluedefi() {
           <div style={{display: "flex", gap: 20, marginTop: 20}}>
             <Button size="lg" className="bg-gray-300 text-black font-bold hover:bg-gray-400" onPress={() => { window.location.href = "/"; }}>Retour à l'accueil</Button>
             <Button size="lg" className="bg-purple-600 text-white font-bold hover:bg-purple-700" onPress={() => { window.location.href = "/defis"; }}>Jouer à un autre Jeu</Button>
-            <Button size="lg" className="bg-blue-600 text-white font-bold hover:bg-blue-700" onPress={() => { window.location.href = "/defis/depollue"; }}>Partager 🔗</Button>
+            <Button size="lg" className="bg-blue-600 text-white font-bold hover:bg-blue-700" onPress={() => { window.location.href = "/defis/depollue"; }}>Rejouer</Button>
           </div>
 
           {/* Bouton Plus d'infos */}
@@ -437,15 +574,27 @@ export default function Depolluedefi() {
 
               <div>
                 <strong>Objets collectés cette partie :</strong>
-                <ul style={{marginTop: 8, paddingLeft: 20}}>
+                <ul style={{marginTop: 8, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8}}>
                   {allSpawnedObjects.map(o => (
-                    <li key={o.object.id}>
-                      {o.object.emoji} {o.object.name} ({o.type === "pollutant" ? "polluant" : "non polluant"})
-                      {o.object.description && (
-                        <div style={{fontSize: 14, opacity: 0.85}}>
-                          {" — "}{o.object.description}
+                    <li key={o.object.id} style={{display: "flex", alignItems: "center", gap: 8}}>
+                      {/* Image */}
+                      <img 
+                        src={`http://localhost:8000/static/depollue/${o.object.image}`} 
+                        alt={o.object.name} 
+                        style={{width: 40, height: 40, objectFit: "contain"}}
+                      />
+                      
+                      {/* Texte */}
+                      <div>
+                        <div>
+                          {o.object.name} ({o.type === "pollutant" ? "polluant" : "non polluant"})
                         </div>
-                      )}
+                        {o.object.description && (
+                          <div style={{fontSize: 14, opacity: 0.85}}>
+                            {o.object.description}
+                          </div>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
