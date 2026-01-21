@@ -83,6 +83,7 @@ def get_objects(db: Session = Depends(get_db)):
             "emoji": o.emoji,
             "name": o.name,
             "description": o.description,
+            "image": o.image,
         }
         if o.object_type == "pollutant":
             pollutants.append(obj_dict)

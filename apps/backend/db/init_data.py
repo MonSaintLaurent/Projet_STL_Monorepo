@@ -52,7 +52,8 @@ def init_data():
             emoji=obj["emoji"],
             name=obj["name"],
             description=obj["description"],
-            object_type="pollutant"
+            object_type="pollutant",
+            image=obj.get("image", ""),
         ))
 
     for obj in allowed_objects.values():
@@ -61,7 +62,8 @@ def init_data():
             emoji=obj["emoji"],
             name=obj["name"],
             description=obj["description"],
-            object_type="allowed"
+            object_type="allowed",
+            image=obj.get("image", ""),
         ))
 
     # --- Maps Depollue

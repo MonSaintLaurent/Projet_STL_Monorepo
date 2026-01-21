@@ -214,10 +214,10 @@ export default function FindValuedefi() {
         pointType: "circle",
         filled: true,
         stroked: true,
-        getPointRadius: 120,
+        getPointRadius: 250,
         getFillColor: [0, 0, 0, 255],
         getLineColor: [255, 255, 255, 255],
-        lineWidthMinPixels: 2,
+        lineWidthMinPixels: 3,
       });
 
     return selectionLayer ? [baseLayer, selectionLayer] : [baseLayer];

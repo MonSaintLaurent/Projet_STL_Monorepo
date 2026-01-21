@@ -69,7 +69,6 @@ export default function PoulesSection({onViewDetail, onNavigate}: PoulesSectionP
         <div className="poules-section">
             <div className="section-header">
                 <h1 className="section-title">🏆 Mes Poules</h1>
-                <button className="alice-btn">Name</button>
             </div>
 
             {/* Quick Actions */}

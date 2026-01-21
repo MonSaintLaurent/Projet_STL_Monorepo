@@ -31,5 +31,5 @@ class DepollueObject(Base):
     emoji = Column(String(10), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-
+    image = Column(String(255), nullable=True)
     object_type = Column(String(20), nullable=False)  # pollutant | allowed

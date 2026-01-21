@@ -19,7 +19,6 @@ app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 # CORS pour permettre au frontend de communiquer avec le backend
 origins = [
     "http://localhost:5173",
-    "*",
 ]
 
 app.add_middleware(
@@ -48,16 +47,22 @@ def read_root():
 
 
 BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "data" / "images" / "defis"
 
-if not STATIC_DIR.exists():
-    print(f"Le dossier {STATIC_DIR} n'existe pas")
+# Défis
+STATIC_DEFIS = BASE_DIR / "data" / "images" / "defis"
+if not STATIC_DEFIS.exists():
+    print(f"Dossier défis inexistant : {STATIC_DEFIS}")
 else:
-    print(f"Dossier static trouvé : {STATIC_DIR}")
+    print(f"Dossier défis trouvé : {STATIC_DEFIS}")
+app.mount("/static/defis", StaticFiles(directory=str(STATIC_DEFIS)), name="defis")
 
-app.mount("/static/defis", StaticFiles(directory=str(STATIC_DIR)), name="defis")
-
-
+# Objets Depollue
+STATIC_DEPOLLUE = BASE_DIR / "data" / "images" / "depollue"
+if not STATIC_DEPOLLUE.exists():
+    print(f"Dossier depollue inexistant : {STATIC_DEPOLLUE}")
+else:
+    print(f"Dossier depollue trouvé : {STATIC_DEPOLLUE}")
+app.mount("/static/depollue", StaticFiles(directory=str(STATIC_DEPOLLUE)), name="depollue")
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,22 +1,32 @@
 # allowed_objects.py
 allowed_objects = {
-    "boat": {
-        "id": "boat",
+    "sailboat": {
+        "id": "sailboat",
         "emoji": "V",
-        "name": "Bateau",
-        "description": "Un bateau circulant sur le fleuve.",
+        "name": "Voilier",
+        "description": "Un voilier circulant sur le fleuve.",
+        "image": "sailboat.png",
     },
     "buoy": {
         "id": "buoy",
         "emoji": "V",
         "name": "Bouée",
         "description": "Bouée de signalisation pour la navigation.",
+        "image": "buoy.png",
     },
-    "fish": {
-        "id": "fish",
+    "truite_arcenciel": {
+        "id": "truite_arcenciel",
         "emoji": "V",
-        "name": "Poisson",
-        "description": "Faune du fleuve Saint-Laurent",
+        "name": "Truite Arc-en-ciel",
+        "description": "Petit poisson argenté, souvent pêché pour appât ou consommation locale.",
+        "image": "truite_arcenciel.png",
+    },
+    "atlantic_salmon": {
+        "id": "atlantic_salmon",
+        "emoji": "V",
+        "name": "Saumon atlantique",
+        "description": "Poisson migrateur qui remonte le Saint-Laurent pour se reproduire.",
+        "image": "atlantic_salmon.png",
     },
 }
 
@@ -27,18 +37,21 @@ pollutants = {
         "emoji": "X",
         "name": "Bouteille en plastique",
         "description": "Les bouteilles en plastique mettent des centaines d’années à se dégrader et nuisent gravement à la faune aquatique.",
+        "image": "plastic_bottle.png",
     },
     "tire": {
         "id": "tire",
         "emoji": "X",
         "name": "Pneu usagé",
         "description": "Les pneus libèrent des substances toxiques et perturbent les écosystèmes aquatiques.",
+        "image": "tire.png",
     },
     "oil_barrel": {
         "id": "oil_barrel",
         "emoji": "X",
         "name": "Baril de pétrole",
         "description": "Les hydrocarbures contaminent l’eau et détruisent les habitats naturels.",
+        "image": "oil_barrel.png",
     },
 }
 
@@ -60,10 +73,13 @@ depollue_maps = {
         "pollutants": [
             pollutants["plastic_bottle"],
             pollutants["tire"],
+            pollutants["oil_barrel"],
         ],
         "allowed_objects": [
-            allowed_objects["boat"],
+            allowed_objects["sailboat"],
             allowed_objects["buoy"],
+            allowed_objects["truite_arcenciel"],
+            allowed_objects["atlantic_salmon"],
         ],
         "spawn_points": [
             [-70.836541, 47.034789],
@@ -81,7 +97,6 @@ depollue_maps = {
             [-70.597184, 47.212062],
             [-70.497252, 47.197137],
             [-70.446083, 47.169141],
-            [-70.546703, 47.230293],
             [-70.442993, 47.226331],
             [-70.358857, 47.220036],
             [-70.349928, 47.175488],
@@ -112,8 +127,8 @@ depollue_maps = {
             pollutants["plastic_bottle"],
         ],
         "allowed_objects": [
-            allowed_objects["boat"],
-            allowed_objects["fish"],
+            allowed_objects["sailboat"],
+            allowed_objects["truite_arcenciel"],
         ],
         "spawn_points": [
         ],
