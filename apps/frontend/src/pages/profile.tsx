@@ -3,6 +3,7 @@ import {useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import DefaultLayout from "@/layouts/default";
 import StatProfile from "@/components/profileStat";
+import FriendsSection from "@/components/friendsSection";
 import "@/styles/profile.css";
 
 function formatPlayTime(seconds: number) {
@@ -178,12 +179,15 @@ export default function ProfilePage() {
               <StatProfile title="Nombre de sessions" value={stats.total_sessions.toString()} />
               <StatProfile title="Défis joués" value={stats.defis_played.toString()} />
               <StatProfile title="Score max" value={stats.max_score_ever.toString()} />
-              <StatProfile title="Temps total de jeu" value={stats ? formatPlayTime(stats.total_play_time) : "Chargement..."} />
+              <StatProfile title="Temps total de jeu" value={formatPlayTime(stats.total_play_time)} />
             </>
           ) : (
             <p>Chargement des stats...</p>
           )}
         </div>
+
+        {/* Section Gestion des amis */}
+        <FriendsSection />
 
         <div
           style={{

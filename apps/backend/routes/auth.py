@@ -13,7 +13,6 @@ from pydantic import BaseModel
 from db.models.users_db import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-router = APIRouter(prefix="/users", tags=["users"])
 
 ALGORITHMS = ["RS256"]
 API_AUDIENCE = "https://api.monstl.local"
@@ -39,19 +38,12 @@ def sync_user(authorization: str = Header(...), db: Session = Depends(get_db)):
     name = payload.get(f"{namespace}/name")
     picture = payload.get(f"{namespace}/picture")
 
-    # print(f"DEBUG - sub reçu du token: '{sub}'")  # Debug
-    # print(f"DEBUG - type de sub: {type(sub)}")     # Debug
-
     if not email:
         print("Payload reçu:", payload)
         raise HTTPException(status_code=400, detail="Email manquant dans le token Auth0")
 
     # Vérifier si l'utilisateur existe déjà
     db_user = get_user_by_auth0_id(db, sub)
-    
-    # print(f"DEBUG - Utilisateur trouvé: {db_user}")  # Debug
-    # if db_user:
-    #     print(f"DEBUG - ID utilisateur: {db_user.id}, auth0_id: '{db_user.auth0_id}'")  # Debug
     
     if db_user:
         # Mettre à jour la dernière connexion
@@ -71,8 +63,6 @@ def sync_user(authorization: str = Header(...), db: Session = Depends(get_db)):
             "user_id": db_user.id,
             "is_new": False
         }
-
-    print(f"DEBUG - Création d'un nouvel utilisateur avec auth0_id: '{sub}'")  # DEBUG
     
     # Créer un nouvel utilisateur
     new_user = create_user(db, sub, email, name, picture)
@@ -90,5 +80,3 @@ def debug_token(user=Depends(verify_token)):
 @router.get("/protected")
 def protected_route(user=Depends(verify_token)):
     return {"message": "Token valide", "user": user}
-
-

@@ -14,6 +14,7 @@ import LoginPage from "@/pages/login";
 import ProfilePage from "@/pages/profile";
 import FindValuedefi from "./pages/defis/findValue";
 import Depolluedefi from "./pages/defis/depollue";
+import PoulePage from "./pages/poules";
 
 function App() {
   const {isLoading, error, isAuthenticated, user, getAccessTokenSilently} = useAuth0();
@@ -70,6 +71,7 @@ function App() {
       <Route element={<LoginPage />} path="/login" />
       <Route element={<ProfilePage />} path="/profile" />
       <Route element={<LoadingPage />} path="/callback" />
+      <Route element={<PoulePage />} path="/poules" />
     </Routes>
   );
 }

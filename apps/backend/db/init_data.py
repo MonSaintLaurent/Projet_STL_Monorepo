@@ -1,5 +1,6 @@
 from db.database import SessionLocal
 from db import models
+from datetime import datetime, timedelta, timezone
 
 from defis.data.defis_data import defis_data
 from defis.data.projects_data import projects_data
@@ -126,7 +127,159 @@ def init_data():
     )
 
     session.commit()
+    init_poules_test_data(session) # Enlever si pas poules test
     session.close()
+
+def init_poules_test_data(session):
+    print("Initialisation des poules de test...")
+    
+    # Vérifier qu'on a au moins des utilisateurs et des défis
+    users = session.query(models.User).limit(5).all()
+    defis = session.query(models.Defi).limit(2).all()
+    
+    if len(users) < 2:
+        print("Pas assez d'utilisateurs pour créer des poules de test (minimum 2 requis)")
+        return
+    
+    if len(defis) < 1:
+        print("Pas de défis disponibles pour créer des poules de test")
+        return
+    
+    now = datetime.now(timezone.utc)
+    
+    # Vérifier si des poules existent déjà
+    existing_poules = session.query(models.Poule).count()
+    if existing_poules > 0:
+        print(f"{existing_poules} poule(s) déjà existante(s), skip création de test")
+        return
+    
+    # Poule 1: En cours
+    try:
+        poule1 = models.Poule(
+            name="Les Gardiens du Fleuve",
+            emoji="🌊",
+            defi_id=defis[0].id,
+            creator_id=users[0].id,
+            max_participants=8,
+            rejouable="non",
+            start_time=now - timedelta(days=3),
+            end_time=now + timedelta(days=4),
+            status="en-cours"
+        )
+        session.add(poule1)
+        session.commit()
+        session.refresh(poule1)
+        
+        # Ajouter des participants avec scores
+        for i, user in enumerate(users[:min(4, len(users))]):
+            participant = models.PouleParticipant(
+                poule_id=poule1.id,
+                user_id=user.id
+            )
+            session.add(participant)
+            
+            best_score = models.PouleBestScore(
+                poule_id=poule1.id,
+                user_id=user.id,
+                best_score=900 - (i * 50),  # 900, 850, 800, 750
+                best_time_spent=120 + (i * 30),  # 120s, 150s, 180s, 210s
+                total_attempts=1,
+                rank=i + 1
+            )
+            session.add(best_score)
+        
+        session.commit()
+        print(f"Poule de test créée: {poule1.name}")
+    
+    except Exception as e:
+        print(f"Erreur lors de la création de la poule 1: {e}")
+        session.rollback()
+    
+    # Poule 2: Fin proche
+    if len(defis) > 1 and len(users) >= 3:
+        try:
+            poule2 = models.Poule(
+                name="Experts du Saint-Laurent",
+                emoji="🎯",
+                defi_id=defis[1].id if len(defis) > 1 else defis[0].id,
+                creator_id=users[1].id,
+                max_participants=6,
+                rejouable="3",
+                start_time=now - timedelta(hours=50),
+                end_time=now + timedelta(hours=10),
+                status="fin-proche"
+            )
+            session.add(poule2)
+            session.commit()
+            session.refresh(poule2)
+            
+            for i, user in enumerate(users[:min(3, len(users))]):
+                participant = models.PouleParticipant(
+                    poule_id=poule2.id,
+                    user_id=user.id
+                )
+                session.add(participant)
+                
+                if i < 2:
+                    best_score = models.PouleBestScore(
+                        poule_id=poule2.id,
+                        user_id=user.id,
+                        best_score=800 - (i * 100),
+                        best_time_spent=150 + (i * 50),
+                        total_attempts=2 if i == 0 else 1,
+                        rank=i + 1
+                    )
+                    session.add(best_score)
+            
+            session.commit()
+            print(f"Poule de test créée: {poule2.name}")
+        
+        except Exception as e:
+            print(f"Erreur lors de la création de la poule 2: {e}")
+            session.rollback()
+    
+    # Poule 3: Invitation en attente
+    if len(users) >= 4:
+        try:
+            poule3 = models.Poule(
+                name="Challenge du Week-end",
+                emoji="👑",
+                defi_id=defis[0].id,
+                creator_id=users[2].id,
+                max_participants=8,
+                rejouable="unlimited",
+                start_time=now + timedelta(hours=24),
+                end_time=now + timedelta(days=3),
+                status="en-cours"
+            )
+            session.add(poule3)
+            session.commit()
+            session.refresh(poule3)
+            
+            participant = models.PouleParticipant(
+                poule_id=poule3.id,
+                user_id=users[2].id
+            )
+            session.add(participant)
+            
+            for user in users[3:min(5, len(users))]:
+                invitation = models.PouleInvitation(
+                    poule_id=poule3.id,
+                    invitee_id=user.id,
+                    inviter_id=users[2].id,
+                    status="pending"
+                )
+                session.add(invitation)
+            
+            session.commit()
+            print(f"Poule de test créée: {poule3.name}")
+        
+        except Exception as e:
+            print(f"Erreur lors de la création de la poule 3: {e}")
+            session.rollback()
+    
+    print("Initialisation des poules de test terminée")
+
 
 if __name__ == "__main__":
     init_data()

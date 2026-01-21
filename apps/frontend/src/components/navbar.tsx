@@ -75,6 +75,15 @@ export const Navbar = () => {
               Défis
             </Link>
           </NavbarItem>
+          <NavbarItem>
+            <Link
+              className={clsx(linkStyles({ color: "foreground" }))}
+              color="foreground"
+              href="/poules"
+            >
+              Poules
+            </Link>
+          </NavbarItem>
         </div>
       </NavbarContent>
 
@@ -111,6 +120,7 @@ export const Navbar = () => {
             <Link color="foreground" href="/about">À propos de nous</Link>
             <Link color="foreground" href="/projets">Projets</Link>
             <Link color="foreground" href="/defis">Défis</Link>
+            <Link color="foreground" href="/poules">Poules</Link>
           </div>
         </NavbarMenuItem>
       </NavbarMenu>

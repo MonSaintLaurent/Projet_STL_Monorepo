@@ -10,12 +10,16 @@ from routes.projects import router as projects_router
 from defis.findValue.routes import findvalue_router
 from routes.defi_sessions import router as defi_sessions_router
 from routes.users import router as users_router
+from routes import poules
+from routes import userRelation
+from routes import userSearch
 
 app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 
 # CORS pour permettre au frontend de communiquer avec le backend
 origins = [
     "http://localhost:5173",
+    "*",
 ]
 
 app.add_middleware(
@@ -33,6 +37,9 @@ app.include_router(projects_router)
 app.include_router(findvalue_router)
 app.include_router(defi_sessions_router)
 app.include_router(users_router)
+app.include_router(poules.router)
+app.include_router(userRelation.router)
+app.include_router(userSearch.router)
 
 
 @app.get("/")
