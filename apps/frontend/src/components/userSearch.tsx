@@ -76,10 +76,7 @@ export default function UserSearch({ onInvite, onAddFriend, excludeIds = [] }: U
                                     </div>
                                 </div>
                                 <div>
-                                    {isFriend
-                                        ? <button onClick={() => onInvite(user)} style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", backgroundColor: "#10b981", color: "white", border: "none" }}>Inviter</button>
-                                        : <button onClick={() => handleAddFriend(user)} disabled={isPending} style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", backgroundColor: isPending ? "#fbbf24" : "#6366f1", color: "white", border: "none" }}>{isPending ? "En attente" : "Ajouter"}</button>
-                                    }
+                                    <button onClick={() => onInvite(user)} style={{ padding: "0.3rem 0.6rem", borderRadius: "6px", backgroundColor: "#10b981", color: "white", border: "none" }}>Inviter</button>
                                 </div>
                             </li>
                         );
