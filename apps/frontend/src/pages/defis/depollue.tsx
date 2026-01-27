@@ -166,7 +166,11 @@ export default function Depolluedefi() {
       const objectsData = await objectsRes.json();
 
       setMaps(mapsData.maps);
-      setCurrentMap(mapsData.maps[0]); // map 1 par défaut
+      const defaultMap =
+      mapsData.maps.find((m: DepollueMap) => m.id === 1) ?? mapsData.maps[0];
+
+      setCurrentMap(defaultMap);
+
 
       setPollutants(objectsData.pollutants);
       setAllowedObjects(objectsData.allowedObjects);
@@ -447,160 +451,209 @@ export default function Depolluedefi() {
         <div
           style={{
             width: "100%",
-            minHeight: "calc(100vh - 64px)",
+            height: "100vh",
+            overflowY: "auto",
+            overflowX: "hidden",
             background: "white",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 32,
-            padding: "40px 20px",
-            overflowY: "auto" // <-- permet de scroller si "Plus d'infos" est grand
+            paddingTop: 180,
+            paddingBottom: 100,
+            paddingLeft: 20,
+            paddingRight: 20,
+            boxSizing: "border-box"
           }}
         >
-          <Objectif objective={objective} mode="fin"/>
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 32,
+            maxWidth: 800,
+            width: "100%"
+          }}>
+            <Objectif objective={objective} mode="fin"/>
 
-          {/* Section déchets et autres */}
-          <div style={{display: "flex", gap: 80, marginBottom: 20}}>
-            <div style={{textAlign: "center" }}>
-              <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Déchets</div>
-              <div style={{display: "flex", gap: 15, fontSize: 40 }}>
-                {pollutants.map((obj: defiObject, idx: number) => (
-                  <img
-                    key={idx}
-                    src={`http://localhost:8000/static/depollue/${obj.image}`}
-                    alt={obj.name}
-                    style={{ width: 40, height: 40 }}
-                  />
-                ))}
+            {/* Section déchets et autres */}
+            <div style={{display: "flex", gap: 80, marginBottom: 20, flexWrap: "wrap", justifyContent: "center"}}>
+              <div style={{textAlign: "center" }}>
+                <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Déchets</div>
+                <div style={{display: "flex", gap: 15, fontSize: 40, flexWrap: "wrap", justifyContent: "center" }}>
+                  {pollutants.map((obj: defiObject, idx: number) => (
+                    <img
+                      key={idx}
+                      src={`http://localhost:8000/static/depollue/${obj.image}`}
+                      alt={obj.name}
+                      style={{ width: 40, height: 40 }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div style={{textAlign: "center" }}>
+                <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Eléments du fleuve</div>
+                <div style={{display: "flex", gap: 15, fontSize: 40, flexWrap: "wrap", justifyContent: "center"}}>
+                  {allowedObjects.map((obj: defiObject, idx: number) => (
+                    <img
+                      key={idx}
+                      src={`http://localhost:8000/static/depollue/${obj.image}`}
+                      alt={obj.name}
+                      style={{ width: 40, height: 40 }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-            <div style={{textAlign: "center" }}>
-              <div style={{fontSize: 24, fontWeight: "bold", marginBottom: 10}}>Eléments du fleuve</div>
-              <div style={{display: "flex", gap: 15, fontSize: 40}}>
-                {allowedObjects.map((obj: defiObject, idx: number) => (
-                  <img
-                    key={idx}
-                    src={`http://localhost:8000/static/depollue/${obj.image}`}
-                    alt={obj.name}
-                    style={{ width: 40, height: 40 }}
-                  />
-                ))}
+
+            {/* Fun fact */}
+            {funFact && (
+              <div
+                style={{
+                  maxWidth: 600,
+                  width: "100%",
+                  padding: "20px",
+                  borderRadius: 12,
+                  background: "#fef3c7",
+                  color: "#92400e",
+                  fontSize: 20,
+                  fontWeight: "medium",
+                  textAlign: "center",
+                  marginBottom: 20,
+                }}
+              >
+                💡 Point info : {funFact.text}
               </div>
-            </div>
-          </div>
-
-          {/* Fun fact */}
-          {funFact && (
-            <div
-              style={{
-                maxWidth: 600,
-                padding: "20px",
-                borderRadius: 12,
-                background: "#fef3c7",
-                color: "#92400e",
-                fontSize: 20,
-                fontWeight: "medium",
-                textAlign: "center",
-                marginBottom: 20,
-              }}
-            >
-              💡 Point info : {funFact.text}
-            </div>
-          )}
-
-          {/* Score */}
-          <div style={{fontSize: 48, fontWeight: "bold", color: "#22c55e"}}>
-            {isAuthenticated ? (
-              <>{final_scorePlayer}/{max_score} points</>
-            ) : (
-              <>{final_scorePlayer} points (anonyme)</>
             )}
-          </div>
 
-          {/* Barre de progression */}
-          <div style={{width: "400px", height: "20px", background: "#e5e7eb", borderRadius: 10, overflow: "hidden"}}>
-            <div style={{width: `${progressPercent}%`, height: "100%", background: "#22c55e", transition: "width 0.5s ease"}} />
-          </div>
-
-          {/* Multiplicateur gris */}
-          <div style={{background: "#f3f4f6", padding: "12px 24px", borderRadius: 8, fontSize: 18}}>
-            <strong>x{multiplicateur.toFixed(2)}</strong> pour avoir fini avec un timer restant de {formatTime(timeLeft)}
-          </div>
-
-          {/* Polluants retirés */}
-          <div style={{background: "#dcfce7", padding: "12px 24px", borderRadius: 8, fontSize: 18, color: "#166534"}}>
-            Vous avez retiré <strong>{collectedCount} polluants</strong> du fleuve
-          </div>
-
-          {/* Attention si objets autorisés retirés */}
-          {removedAllowed > 0 && (
-            <div style={{fontSize: 16, color: "#dc2626" }}>
-              ⚠️ Attention, vous avez retiré {removedAllowed} objet(s) non polluant(s) du fleuve !
+            {/* Score */}
+            <div style={{fontSize: 48, fontWeight: "bold", color: "#22c55e"}}>
+              {isAuthenticated ? (
+                <>{final_scorePlayer}/{max_score} points</>
+              ) : (
+                <>{final_scorePlayer} points (anonyme)</>
+              )}
             </div>
-          )}
 
-          {/* Boutons */}
-          <div style={{display: "flex", gap: 20, marginTop: 20}}>
-            <Button size="lg" className="bg-gray-300 text-black font-bold hover:bg-gray-400" onPress={() => { window.location.href = "/"; }}>Retour à l'accueil</Button>
-            <Button size="lg" className="bg-purple-600 text-white font-bold hover:bg-purple-700" onPress={() => { window.location.href = "/defis"; }}>Jouer à un autre Jeu</Button>
-            <Button size="lg" className="bg-blue-600 text-white font-bold hover:bg-blue-700" onPress={() => { window.location.href = "/defis/depollue"; }}>Rejouer</Button>
-          </div>
+            {/* Barre de progression */}
+            <div style={{width: "100%", maxWidth: 400, height: "20px", background: "#e5e7eb", borderRadius: 10, overflow: "hidden"}}>
+              <div style={{width: `${progressPercent}%`, height: "100%", background: "#22c55e", transition: "width 0.5s ease"}} />
+            </div>
 
-          {/* Bouton Plus d'infos */}
+            {/* Multiplicateur gris */}
+            <div style={{background: "#f3f4f6", padding: "12px 24px", borderRadius: 8, fontSize: 18, textAlign: "center"}}>
+              <strong>x{multiplicateur.toFixed(2)}</strong> pour avoir fini avec un timer restant de {formatTime(timeLeft)}
+            </div>
+
+            {/* Polluants retirés */}
+            <div style={{background: "#dcfce7", padding: "12px 24px", borderRadius: 8, fontSize: 18, color: "#166534", textAlign: "center"}}>
+              Vous avez retiré <strong>{collectedCount} polluants</strong> du fleuve
+            </div>
+
+            {/* Attention si objets autorisés retirés */}
+            {removedAllowed > 0 && (
+              <div style={{fontSize: 16, color: "#dc2626", textAlign: "center" }}>
+                ⚠️ Attention, vous avez retiré {removedAllowed} objet(s) non polluant(s) du fleuve !
+              </div>
+            )}
+
+            {/* Boutons */}
+            <div style={{display: "flex", gap: 20, marginTop: 20, flexWrap: "wrap", justifyContent: "center"}}>
+              <Button size="lg" className="bg-gray-300 text-black font-bold hover:bg-gray-400" onPress={() => { window.location.href = "/"; }}>Retour à l'accueil</Button>
+              <Button size="lg" className="bg-purple-600 text-white font-bold hover:bg-purple-700" onPress={() => { window.location.href = "/defis"; }}>Jouer à un autre Jeu</Button>
+              <Button size="lg" className="bg-blue-600 text-white font-bold hover:bg-blue-700" onPress={() => { window.location.href = window.location.pathname; }}>Rejouer</Button>
+            </div>
+
+            {/* Bouton Plus d'infos */}
           <Button size="md" className="bg-yellow-500 text-white font-bold hover:bg-yellow-600" onPress={() => setMoreInfoVisible(!moreInfoVisible)}>
-            {moreInfoVisible ? "Fermer les infos" : "Plus d'infos"}
-          </Button>
+              {moreInfoVisible ? "Fermer les infos" : "Plus d'infos"}
+            </Button>
 
           {/* Menu infos */}
-          {moreInfoVisible && (
-            <div
-              style={{
-                maxWidth: 700,
-                marginTop: 16,
-                background: "#f0fdf4",
-                borderRadius: 12,
-                padding: 20,
-                color: "#065f46",
-                fontSize: 16,
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                maxHeight: 400,
-                overflowY: "auto" // scroll si trop grand
-              }}
-            >
-              {recyclageFact && <div>{recyclageFact.text}</div>}
+            {moreInfoVisible && (
+              <div
+                style={{
+                  width: "100%",
+                  maxWidth: 700,
+                  background: "#f0fdf4",
+                  borderRadius: 12,
+                  padding: 20,
+                  color: "#065f46",
+                  fontSize: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  marginTop: 0
+                }}
+              >
+                {recyclageFact && (
+                  <div style={{
+                    padding: "12px",
+                    background: "#dcfce7",
+                    borderRadius: 8,
+                    marginBottom: 8
+                  }}>
+                    {recyclageFact.text}
+                  </div>
+                )}
 
-              <div>
-                <strong>Objets collectés cette partie :</strong>
-                <ul style={{marginTop: 8, paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8}}>
-                  {allSpawnedObjects.map(o => (
-                    <li key={o.object.id} style={{display: "flex", alignItems: "center", gap: 8}}>
-                      {/* Image */}
-                      <img 
-                        src={`http://localhost:8000/static/depollue/${o.object.image}`} 
-                        alt={o.object.name} 
-                        style={{width: 40, height: 40, objectFit: "contain"}}
-                      />
-                      
-                      {/* Texte */}
-                      <div>
-                        <div>
-                          {o.object.name} ({o.type === "pollutant" ? "polluant" : "non polluant"})
-                        </div>
-                        {o.object.description && (
-                          <div style={{fontSize: 14, opacity: 0.85}}>
-                            {o.object.description}
+                <div>
+                  <strong style={{display: "block", marginBottom: 12}}>Objets collectés cette partie :</strong>
+                  <div style={{
+                    display: "flex", 
+                    flexDirection: "column", 
+                    gap: 12,
+                    maxHeight: 400,
+                    overflowY: "auto",
+                    paddingRight: 8
+                  }}>
+                    {allSpawnedObjects.map(o => (
+                      <div key={o.object.id} style={{
+                        display: "flex", 
+                        alignItems: "flex-start", 
+                        gap: 12,
+                        padding: "12px",
+                        background: "white",
+                        borderRadius: 8,
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                      }}>
+                        {/* Image */}
+                        <img 
+                          src={`http://localhost:8000/static/depollue/${o.object.image}`} 
+                          alt={o.object.name} 
+                          style={{
+                            width: 50, 
+                            height: 50, 
+                            objectFit: "contain",
+                            flexShrink: 0
+                          }}
+                        />
+                        
+                        {/* Texte */}
+                        <div style={{flex: 1}}>
+                          <div style={{fontWeight: "bold", marginBottom: 4}}>
+                            {o.object.name}
                           </div>
-                        )}
+                          <div style={{
+                            fontSize: 14, 
+                            color: o.type === "pollutant" ? "#dc2626" : "#16a34a",
+                            fontWeight: 600,
+                            marginBottom: 4
+                          }}>
+                            {o.type === "pollutant" ? "🔴 Polluant" : "🟢 Non polluant"}
+                          </div>
+                          {o.object.description && (
+                            <div style={{fontSize: 14, opacity: 0.85, lineHeight: 1.4}}>
+                              {o.object.description}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </li>
-                  ))}
-                </ul>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </DefaultLayout>
     );
@@ -657,6 +710,7 @@ export default function Depolluedefi() {
             getCursor={() => 'pointer'}
             layers={[objectLayer]}
             style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%"}}
+            onClick={(info) => console.log("Coords cliquées :", info.coordinate)} // Pour setup les coordonnées en cliquant sur la map, facile pour créer des spawnpoints pour les prochaines cartes
           >
             <Map
               mapLib={maplibregl}

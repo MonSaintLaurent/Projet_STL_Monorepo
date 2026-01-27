@@ -11,6 +11,8 @@ import DefaultLayout from "@/layouts/default";
 import "@/styles/inDefi.css";
 import tickSound from "@/sounds/tick.mp3";
 import {useAuth0} from "@auth0/auth0-react";
+import Objectif from "@/components/objective";
+import {defis} from "@/data/defis.json";
 
 export default function FindValuedefi() {
   const [maps, setMaps] = useState<any[]>([]);
@@ -33,6 +35,10 @@ export default function FindValuedefi() {
   const {isAuthenticated, getAccessTokenSilently} = useAuth0();
 
   const [deckKey, setDeckKey] = useState(0);
+
+  // Récupérer l'objectif depuis defis.json pour le défi FindValue (id = 2)
+  const defiData = defis.find(d => d.id === 2);
+  const objective = defiData?.objective || "Trouver l'emplacement où la vitesse est la plus grande";
 
   useEffect(() => {
     fetch("http://localhost:8000/data/findvalue/maps")
@@ -233,115 +239,125 @@ export default function FindValuedefi() {
 
     return (
       <DefaultLayout fullScreen>
-        <div className="defi-fullscreen" style={{backgroundColor: "#f3f4f6"}}>
-          <div className="defi-result-modal" style={{maxWidth: "600px"}}>
-            {/* Badge RÉSULTATS */}
+        <div
+          style={{
+            width: "100%",
+            minHeight: "calc(100vh - 64px)",
+            background: "white",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 32,
+            padding: "40px 20px",
+            overflowY: "auto"
+          }}
+        >
+          {/* Objectif */}
+          <Objectif objective={objective} mode="fin"/>
+
+          {/* Image du défi */}
+          {imageUrl && (
             <div style={{
-              position: "absolute",
-              top: "-20px",
-              left: "20px",
-              backgroundColor: "#1e40af",
-              color: "white",
-              padding: "8px 24px",
-              borderRadius: "1.5rem",
-              fontSize: "0.875rem",
-              fontWeight: "bold",
-              letterSpacing: "0.05em"
+              width: "250px",
+              height: "250px",
+              backgroundColor: "#e5e7eb",
+              borderRadius: "1rem",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
             }}>
-              RÉSULTATS
+              <img 
+                src={imageUrl} 
+                alt={mapConfig?.name}
+                style={{width: "100%", height: "100%", objectFit: "cover"}}
+              />
             </div>
+          )}
 
-            {/* Titre du défi avec image */}
+          {/* Score */}
+          {validationResult && (
+            <div style={{fontSize: "48px", fontWeight: "bold", color: "#22c55e"}}>
+              {isAuthenticated ? (
+                <>{validationResult.final_score}/{validationResult.max_score} points</>
+              ) : (
+                <>{validationResult.final_score} points (anonyme)</>
+              )}
+            </div>
+          )}
+
+          {/* Barre de progression */}
+          {validationResult && (
             <div style={{
-              backgroundColor: "#2563eb",
-              color: "white",
-              padding: "20px",
-              borderRadius: "1.5rem 1.5rem 0 0",
-              fontSize: "1.25rem",
-              fontWeight: "bold",
-              textAlign: "center",
-              marginTop: "20px"
+              width: "400px",
+              height: "20px",
+              backgroundColor: "#e5e7eb",
+              borderRadius: "10px",
+              overflow: "hidden"
             }}>
-              {mapConfig?.name || "Trouver l'emplacement ou la vitesse est la plus grande"}
-            </div>
-
-            {/* Image du défi */}
-            {imageUrl && (
               <div style={{
-                width: "200px",
-                height: "200px",
-                margin: "20px auto",
-                backgroundColor: "#e5e7eb",
-                borderRadius: "1rem",
-                overflow: "hidden",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
-                <img 
-                  src={imageUrl} 
-                  alt={mapConfig?.name}
-                  style={{width: "100%", height: "100%", objectFit: "cover"}}
-                />
-              </div>
-            )}
-
-            {/* Score */}
-            {validationResult && (
-              <div style={{fontSize: "3rem", fontWeight: "bold", color: "#22c55e", margin: "20px 0"}}>
-                {validationResult.final_score}/{validationResult.max_score} points
-              </div>
-            )}
-
-            {/* Barre de progression */}
-            {validationResult && (
-              <div style={{
-                width: "100%",
-                height: "30px",
-                backgroundColor: "#e5e7eb",
-                borderRadius: "1rem",
-                overflow: "hidden",
-                marginBottom: "20px"
-              }}>
-                <div style={{
-                  width: `${progressPercent}%`,
-                  height: "100%",
-                  background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
-                  transition: "width 1s ease-out"
-                }} />
-              </div>
-            )}
-
-            {/* Détails */}
-            <p style={{fontSize: "1rem", color: "#374151", margin: "10px 0"}}>
-              {validationResult 
-                ? `Vous étiez à ${validationResult.distance_m.toFixed(0)} mètres du point d'aujourd'hui`
-                : selectedPoint
-                  ? `Vous avez sélectionné un point à ${selectedPoint?.properties.velocity?.toFixed(2)} m/s`
-                  : "Aucun point sélectionné"
-              }
-            </p>
-
-            {validationResult && (
-              <div style={{fontSize: "0.875rem", color: "#6b7280", marginTop: "10px"}}>
-                <div>📍 Score distance: {validationResult.distance_score} pts</div>
-                <div>⏱️ Bonus temps: {validationResult.time_bonus} pts</div>
-              </div>
-            )}
-
-            {/* Boutons */}
-            <div className="result-buttons" style={{marginTop: "30px"}}>
-              <button onClick={resetdefi}>Réessayer</button>
-              <button onClick={() => window.location.href = mapConfig?.home_url ?? "/"}>
-                Retour à l'accueil
-              </button>
-              <button 
-                style={{backgroundColor: "#2563eb"}}
-                onClick={() => {/* TODO: Partager */}}
-              >
-                Partager 🔗
-              </button>
+                width: `${progressPercent}%`,
+                height: "100%",
+                background: "#22c55e",
+                transition: "width 0.5s ease"
+              }} />
             </div>
+          )}
+
+          {/* Distance */}
+          <div style={{
+            background: "#dcfce7",
+            padding: "12px 24px",
+            borderRadius: 8,
+            fontSize: 18,
+            color: "#166534"
+          }}>
+            {validationResult 
+              ? `📍 Vous étiez à ${validationResult.distance_m.toFixed(0)} mètres du point optimal`
+              : selectedPoint
+                ? `Vous avez sélectionné un point à ${selectedPoint?.properties.velocity?.toFixed(2)} m/s`
+                : "Aucun point sélectionné"
+            }
+          </div>
+
+          {/* Détails du score */}
+          {validationResult && (
+            <div style={{
+              background: "#f3f4f6",
+              padding: "12px 24px",
+              borderRadius: 8,
+              fontSize: 16,
+              color: "#374151"
+            }}>
+              <div>📍 Score distance: {validationResult.distance_score} pts</div>
+              <div>⏱️ Bonus temps: {validationResult.time_bonus} pts</div>
+            </div>
+          )}
+
+          {/* Boutons */}
+          <div style={{display: "flex", gap: 20, marginTop: 20}}>
+            <Button 
+              size="lg" 
+              className="bg-gray-300 text-black font-bold hover:bg-gray-400"
+              onPress={() => window.location.href = mapConfig?.home_url ?? "/"}
+            >
+              Retour à l'accueil
+            </Button>
+            <Button 
+              size="lg" 
+              className="bg-purple-600 text-white font-bold hover:bg-purple-700"
+              onPress={() => window.location.href = "/defis"}
+            >
+              Jouer à un autre Jeu
+            </Button>
+            <Button 
+              size="lg" 
+              className="bg-blue-600 text-white font-bold hover:bg-blue-700"
+              onPress={resetdefi}
+            >
+              Rejouer
+            </Button>
           </div>
         </div>
       </DefaultLayout>
@@ -351,6 +367,20 @@ export default function FindValuedefi() {
 
   return (
     <DefaultLayout fullScreen>
+      <div>
+        {/* Composant Objectif bulle */}
+        <Objectif
+          objective={objective}
+          mode="jeu"
+          style={{
+            position: "fixed",
+            top: 50,
+            left: 20,
+            zIndex: 2000,
+          }}
+        />
+      </div>
+
       <div style={{width: "100vw", height: "100vh", position: "relative"}}>
         <div className={`defi-timer ${mapConfig && timeLeft > 0 && timeLeft <= mapConfig.tick_alert ? "alert" : ""}`}>
           ⏱️ {formatTime(timeLeft)}
