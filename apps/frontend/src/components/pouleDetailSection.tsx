@@ -1,5 +1,6 @@
 import {usePouleRanking, formatTimeRemaining, formatTimeAgo} from "@/hooks/usePoules";
 import {useNavigate} from "react-router-dom";
+import {useAuth0} from "@auth0/auth0-react";
 
 interface PouleDetailSectionProps {
     pouleId: string;
@@ -12,7 +13,7 @@ export default function PouleDetailSection({
 }: PouleDetailSectionProps) {
     const {pouleDetail, ranking, loading} = usePouleRanking(parseInt(pouleId));
     const navigate = useNavigate();
-
+    const {getAccessTokenSilently} = useAuth0(); 
     if (loading || !pouleDetail) {
         return (
             <div className="poule-detail-section">
@@ -48,14 +49,50 @@ export default function PouleDetailSection({
         return colors[index % colors.length];
     };
 
-    const handlePlayDefi = () => {
+    const handlePlayDefi = async () => {
         if (!pouleDetail.defi_route) {
             console.error("defi_route manquante dans pouleDetail");
             return;
         }
 
-        navigate(pouleDetail.defi_route);
+        try {
+            // Récupérer le token Auth0
+            const token = await getAccessTokenSilently();
+            
+            // Créer une session poule
+            const res = await fetch("http://localhost:8000/poules/start-session", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ poule_id: pouleDetail.id })
+            });
+
+            let data;
+            try {
+                data = await res.json();
+            } catch (err) {
+                console.error("Erreur JSON:", err);
+                alert("Erreur: la session n'a pas pu être créée");
+                return;
+            }
+
+            if (!res.ok) {
+                alert(data?.detail || "Impossible de démarrer la session");
+                return;
+            }
+
+            const sessionId = data.session_id;
+
+            // Rediriger vers le jeu en passant session + poule
+            navigate(`${pouleDetail.defi_route}?session_id=${sessionId}&poule_id=${pouleDetail.id}`);
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors du démarrage du défi");
+        }
     };
+
 
     return (
         <div className="poule-detail-section">
@@ -177,8 +214,14 @@ export default function PouleDetailSection({
                 </button>
 
                 {pouleDetail.status !== "terminee" && (
-                    <button className="improve-score-btn" onClick={handlePlayDefi}>
-                        🎯 Améliorer mon score
+                    <button 
+                        className="improve-score-btn" 
+                        onClick={handlePlayDefi} 
+                        disabled={pouleDetail.attempts_left === 0}
+                    >
+                        {pouleDetail.attempts_left === 0 
+                            ? "❌ Plus de tentatives" 
+                            : "🎯 Améliorer mon score"}
                     </button>
                 )}
             </div>

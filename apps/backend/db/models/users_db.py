@@ -26,6 +26,7 @@ class DefiSession(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     defi_id = Column(Integer, ForeignKey("defis.id"), nullable=False, index=True)
+    poule_id = Column(Integer, ForeignKey("poules.id"), nullable=True, index=True)
 
     score = Column(Integer, nullable=True)
     time_spent = Column(Integer, nullable=True)

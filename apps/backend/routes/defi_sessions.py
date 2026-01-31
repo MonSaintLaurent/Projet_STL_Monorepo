@@ -13,7 +13,7 @@ from typing import Optional, Dict
 router = APIRouter(prefix="/defi_sessions", tags=["defi_sessions"])
 
 class FinishDefiRequest(BaseModel):
-    defi_id: int
+    session_id: int
     score: int
     time_spent: int
     completed: bool = True
@@ -53,7 +53,7 @@ def finish_defi(
     db: Session = Depends(get_db)
 ):
     # Récupération des valeurs du body
-    defi_id = request.defi_id
+    session_id = request.session_id
     score = request.score
     time_spent = request.time_spent
     completed = request.completed
@@ -64,56 +64,63 @@ def finish_defi(
     if not user:
         return {"status": "anonymous", "score_saved": False}
 
+    # Récupérer la session existante
+    session = db.query(DefiSession).filter(DefiSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session introuvable")
+    
+    if session.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Cette session ne vous appartient pas")
+
+    defi_id = session.defi_id
     defi = db.query(Defi).filter(Defi.id == defi_id).first()
     if not defi:
         raise HTTPException(status_code=404, detail="Défi introuvable")
 
-    # Création de la session à la fin
-    session = DefiSession(
-        user_id=user.id,
-        defi_id=defi_id,
-        score=score,
-        time_spent=time_spent,
-        completed=completed,
-        started_at=datetime.now(timezone.utc),
-        completed_at=datetime.now(timezone.utc),
-        session_metadata=metadata or {}
-    )
-    db.add(session)
+    # Mettre à jour la session
+    session.score = score
+    session.time_spent = time_spent
+    session.completed = completed
+    session.completed_at = datetime.now(timezone.utc)
+    session.session_metadata = metadata or {}
+    
     db.commit()
     db.refresh(session)
 
-    # Gestion record
-    record = db.query(UserDefiRecord).filter(
-        UserDefiRecord.user_id == user.id,
-        UserDefiRecord.defi_id == defi_id
-    ).first()
-
-    max_score = getattr(defi, "max_score", 1000)
+    # Gestion record (seulement si pas en mode poule)
     is_new_record = False
+    record = None
+    
+    if not session.poule_id:
+        record = db.query(UserDefiRecord).filter(
+            UserDefiRecord.user_id == user.id,
+            UserDefiRecord.defi_id == defi_id
+        ).first()
 
-    if not record:
-        record = UserDefiRecord(
-            user_id=user.id,
-            defi_id=defi_id,
-            best_score=score,
-            best_time_spent=time_spent,
-            max_score_at_time=max_score,
-            session_id=session.id,
-            achieved_at=datetime.now(timezone.utc)
-        )
-        db.add(record)
-        is_new_record = True
-    else:
-        if score > record.best_score or (score == record.best_score and time_spent < (record.best_time_spent or 99999)):
-            record.best_score = score
-            record.best_time_spent = time_spent
-            record.max_score_at_time = max_score
-            record.session_id = session.id
-            record.achieved_at = datetime.now(timezone.utc)
+        max_score = getattr(defi, "max_score", 1000)
+
+        if not record:
+            record = UserDefiRecord(
+                user_id=user.id,
+                defi_id=defi_id,
+                best_score=score,
+                best_time_spent=time_spent,
+                max_score_at_time=max_score,
+                session_id=session.id,
+                achieved_at=datetime.now(timezone.utc)
+            )
+            db.add(record)
             is_new_record = True
+        else:
+            if score > record.best_score or (score == record.best_score and time_spent < (record.best_time_spent or 99999)):
+                record.best_score = score
+                record.best_time_spent = time_spent
+                record.max_score_at_time = max_score
+                record.session_id = session.id
+                record.achieved_at = datetime.now(timezone.utc)
+                is_new_record = True
 
-    db.commit()
+        db.commit()
 
     # Màj des stats
     stats = db.query(UserStats).filter(UserStats.user_id == user.id).first()
@@ -162,19 +169,76 @@ def finish_defi(
     db.commit()
     db.refresh(stats)
 
-    return {
+    # Si mode poule, soumettre automatiquement le score
+    if session.poule_id:
+        from db.models.poules_db import PouleParticipant, PouleScore, PouleBestScore
+        
+        poule_id = session.poule_id
+        
+        # Vérifier que l'utilisateur est participant
+        participant = db.query(PouleParticipant).filter(
+            PouleParticipant.poule_id == poule_id,
+            PouleParticipant.user_id == user.id
+        ).first()
+        
+        if participant:
+            # Récupérer le meilleur score de l'utilisateur pour cette poule
+            best_score_record = db.query(PouleBestScore).filter(
+                PouleBestScore.poule_id == poule_id,
+                PouleBestScore.user_id == user.id
+            ).first()
+            
+            # Calculer le numéro de tentative
+            attempt_number = 1
+            if best_score_record:
+                attempt_number = best_score_record.total_attempts + 1
+            
+            # Créer le score de poule
+            poule_score = PouleScore(
+                poule_id=poule_id,
+                user_id=user.id,
+                session_id=session.id,
+                score=score,
+                time_spent=time_spent,
+                attempt_number=attempt_number
+            )
+            db.add(poule_score)
+            
+            # Mettre à jour ou créer le meilleur score
+            poule_is_new_best = False
+            if not best_score_record:
+                best_score_record = PouleBestScore(
+                    poule_id=poule_id,
+                    user_id=user.id,
+                    best_score=score,
+                    best_time_spent=time_spent,
+                    best_session_id=session.id,
+                    total_attempts=1
+                )
+                db.add(best_score_record)
+                poule_is_new_best = True
+            else:
+                best_score_record.total_attempts += 1
+                best_score_record.last_played_at = datetime.now(timezone.utc)
+                
+                if (score > best_score_record.best_score or 
+                    (score == best_score_record.best_score and 
+                     time_spent < best_score_record.best_time_spent)):
+                    best_score_record.best_score = score
+                    best_score_record.best_time_spent = time_spent
+                    best_score_record.best_session_id = session.id
+                    poule_is_new_best = True
+            
+            db.commit()
+            
+            is_new_record = poule_is_new_best
+
+    response = {
         "message": "🎉 Nouveau record !" if is_new_record else "Session terminée",
         "session_id": session.id,
         "score": score,
         "time_spent": time_spent,
         "is_new_record": is_new_record,
-        "record": {
-            "best_score": record.best_score,
-            "best_time_spent": record.best_time_spent,
-            "max_score_at_time": record.max_score_at_time,
-            "session_id": record.session_id,
-            "achieved_at": record.achieved_at.isoformat()
-        },
         "stats": {
             "total_play_time": stats.total_play_time,
             "total_sessions": stats.total_sessions,
@@ -186,6 +250,18 @@ def finish_defi(
             "last_played_at": stats.last_played_at.isoformat() if stats.last_played_at else None
         }
     }
+    
+    # Ajouter record uniquement si pas en mode poule
+    if record:
+        response["record"] = {
+            "best_score": record.best_score,
+            "best_time_spent": record.best_time_spent,
+            "max_score_at_time": record.max_score_at_time,
+            "session_id": record.session_id,
+            "achieved_at": record.achieved_at.isoformat()
+        }
+    
+    return response
 
 
 # Récupérer records + stats user

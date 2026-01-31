@@ -6,10 +6,11 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 from db.database import get_db
-from db.models.users_db import User
+from db.models.users_db import User, DefiSession
 from db.models.defis_db import Defi
 from db.models.poules_db import Poule, PouleParticipant, PouleInvitation, PouleScore, PouleBestScore
 from auth.auth0 import verify_token
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/poules", tags=["poules"])
 
@@ -40,6 +41,8 @@ class SubmitPouleScoreRequest(BaseModel):
     poule_id: int
     session_id: int  # ID de la session de défi déjà créée
 
+class StartPouleSessionRequest(BaseModel):
+    poule_id: int
 
 # ----- ROUTES
 @router.post("/create")
@@ -363,6 +366,25 @@ def get_poule_ranking(
     ).all()
     best_scores_dict = {score.user_id: score for score in best_scores}
 
+    # Récupérer le meilleur score de l'utilisateur courant si existe
+    user_best_score = best_scores_dict.get(user.id)
+    total_attempts_so_far = user_best_score.total_attempts if user_best_score else 0
+
+    # Déterminer le maximum de tentatives selon le champ "rejouable"
+    # Pas utiliser float("inf") car JSON ne peut pas l'encoder
+    if poule.rejouable == "non":
+        max_attempts = 1
+    elif poule.rejouable == "unlimited":
+        max_attempts = 999999 
+    else:
+        try:
+            max_attempts = int(poule.rejouable)
+        except ValueError:
+            max_attempts = 1
+
+    # Tentatives restantes
+    attempts_left = max(0, max_attempts - total_attempts_so_far)
+
     # Construire le ranking complet
     ranking_data = []
     for participant in participants:
@@ -422,123 +444,124 @@ def get_poule_ranking(
             "rejouable": poule.rejouable,
             "participants": participants_count,
             "time_remaining_seconds": max(0, int(time_remaining.total_seconds())),
-            "status": poule.status
+            "status": poule.status,
+            "attempts_left": attempts_left  #Entier, pas inf 
         },
         "ranking": ranking_data
     }
 
 
 
-@router.post("/submit-score")
-def submit_poule_score(
-    request: SubmitPouleScoreRequest,
-    token_payload=Depends(verify_token),
-    db: Session = Depends(get_db)
-):
-    """Soumettre un score pour une poule (après avoir joué au défi)"""
-    auth0_id = token_payload["sub"]
-    user = db.query(User).filter(User.auth0_id == auth0_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+# @router.post("/submit-score")
+# def submit_poule_score(
+#     request: SubmitPouleScoreRequest,
+#     token_payload=Depends(verify_token),
+#     db: Session = Depends(get_db)
+# ):
+#     """Soumettre un score pour une poule (après avoir joué au défi)"""
+#     auth0_id = token_payload["sub"]
+#     user = db.query(User).filter(User.auth0_id == auth0_id).first()
+#     if not user:
+#         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
     
-    poule = db.query(Poule).filter(Poule.id == request.poule_id).first()
-    if not poule:
-        raise HTTPException(status_code=404, detail="Poule introuvable")
+#     poule = db.query(Poule).filter(Poule.id == request.poule_id).first()
+#     if not poule:
+#         raise HTTPException(status_code=404, detail="Poule introuvable")
     
-    # Vérifier que l'utilisateur est participant
-    participant = db.query(PouleParticipant).filter(
-        PouleParticipant.poule_id == request.poule_id,
-        PouleParticipant.user_id == user.id
-    ).first()
+#     # Vérifier que l'utilisateur est participant
+#     participant = db.query(PouleParticipant).filter(
+#         PouleParticipant.poule_id == request.poule_id,
+#         PouleParticipant.user_id == user.id
+#     ).first()
     
-    if not participant:
-        raise HTTPException(status_code=403, detail="Vous n'êtes pas participant de cette poule")
+#     if not participant:
+#         raise HTTPException(status_code=403, detail="Vous n'êtes pas participant de cette poule")
     
-    # Récupérer la session de défi
-    from db.models.users_db import DefiSession
-    session = db.query(DefiSession).filter(DefiSession.id == request.session_id).first()
-    if not session or session.user_id != user.id:
-        raise HTTPException(status_code=404, detail="Session introuvable")
+#     # Récupérer la session de défi
+#     from db.models.users_db import DefiSession
+#     session = db.query(DefiSession).filter(DefiSession.id == request.session_id).first()
+#     if not session or session.user_id != user.id:
+#         raise HTTPException(status_code=404, detail="Session introuvable")
     
-    # Vérifier les limites de rejouabilité
-    best_score_record = db.query(PouleBestScore).filter(
-        PouleBestScore.poule_id == request.poule_id,
-        PouleBestScore.user_id == user.id
-    ).first()
+#     # Vérifier les limites de rejouabilité
+#     best_score_record = db.query(PouleBestScore).filter(
+#         PouleBestScore.poule_id == request.poule_id,
+#         PouleBestScore.user_id == user.id
+#     ).first()
     
-    if best_score_record:
-        if poule.rejouable == "non":
-            raise HTTPException(status_code=400, detail="Cette poule n'est pas rejouable")
-        elif poule.rejouable not in ["unlimited"]:
-            max_attempts = int(poule.rejouable)
-            if best_score_record.total_attempts >= max_attempts:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Nombre maximum de tentatives atteint ({max_attempts})"
-                )
+#     if best_score_record:
+#         if poule.rejouable == "non":
+#             raise HTTPException(status_code=400, detail="Cette poule n'est pas rejouable")
+#         elif poule.rejouable not in ["unlimited"]:
+#             max_attempts = int(poule.rejouable)
+#             if best_score_record.total_attempts >= max_attempts:
+#                 raise HTTPException(
+#                     status_code=400,
+#                     detail=f"Nombre maximum de tentatives atteint ({max_attempts})"
+#                 )
     
-    # Calculer le numéro de tentative
-    attempt_number = 1
-    if best_score_record:
-        attempt_number = best_score_record.total_attempts + 1
+#     # Calculer le numéro de tentative
+#     attempt_number = 1
+#     if best_score_record:
+#         attempt_number = best_score_record.total_attempts + 1
     
-    # Créer le score de poule
-    poule_score = PouleScore(
-        poule_id=request.poule_id,
-        user_id=user.id,
-        session_id=request.session_id,
-        score=session.score,
-        time_spent=session.time_spent,
-        attempt_number=attempt_number
-    )
-    db.add(poule_score)
+#     # Créer le score de poule
+#     poule_score = PouleScore(
+#         poule_id=request.poule_id,
+#         user_id=user.id,
+#         session_id=request.session_id,
+#         score=session.score,
+#         time_spent=session.time_spent,
+#         attempt_number=attempt_number
+#     )
+#     db.add(poule_score)
     
-    # Mettre à jour ou créer le meilleur score
-    is_new_best = False
-    if not best_score_record:
-        best_score_record = PouleBestScore(
-            poule_id=request.poule_id,
-            user_id=user.id,
-            best_score=session.score,
-            best_time_spent=session.time_spent,
-            best_session_id=request.session_id,
-            total_attempts=1
-        )
-        db.add(best_score_record)
-        is_new_best = True
-    else:
-        best_score_record.total_attempts += 1
-        best_score_record.last_played_at = datetime.now(timezone.utc)
+#     # Mettre à jour ou créer le meilleur score
+#     is_new_best = False
+#     if not best_score_record:
+#         best_score_record = PouleBestScore(
+#             poule_id=request.poule_id,
+#             user_id=user.id,
+#             best_score=session.score,
+#             best_time_spent=session.time_spent,
+#             best_session_id=request.session_id,
+#             total_attempts=1
+#         )
+#         db.add(best_score_record)
+#         is_new_best = True
+#     else:
+#         best_score_record.total_attempts += 1
+#         best_score_record.last_played_at = datetime.now(timezone.utc)
         
-        # Comparer avec le meilleur score
-        if (session.score > best_score_record.best_score or 
-            (session.score == best_score_record.best_score and 
-             session.time_spent < best_score_record.best_time_spent)):
-            best_score_record.best_score = session.score
-            best_score_record.best_time_spent = session.time_spent
-            best_score_record.best_session_id = request.session_id
-            is_new_best = True
+#         # Comparer avec le meilleur score
+#         if (session.score > best_score_record.best_score or 
+#             (session.score == best_score_record.best_score and 
+#              session.time_spent < best_score_record.best_time_spent)):
+#             best_score_record.best_score = session.score
+#             best_score_record.best_time_spent = session.time_spent
+#             best_score_record.best_session_id = request.session_id
+#             is_new_best = True
     
-    db.commit()
+#     db.commit()
     
-    # Recalculer le rang
-    better_scores = db.query(PouleBestScore).filter(
-        PouleBestScore.poule_id == request.poule_id,
-        (PouleBestScore.best_score > best_score_record.best_score) |
-        ((PouleBestScore.best_score == best_score_record.best_score) &
-         (PouleBestScore.best_time_spent < best_score_record.best_time_spent))
-    ).count()
+#     # Recalculer le rang
+#     better_scores = db.query(PouleBestScore).filter(
+#         PouleBestScore.poule_id == request.poule_id,
+#         (PouleBestScore.best_score > best_score_record.best_score) |
+#         ((PouleBestScore.best_score == best_score_record.best_score) &
+#          (PouleBestScore.best_time_spent < best_score_record.best_time_spent))
+#     ).count()
     
-    rank = better_scores + 1
+#     rank = better_scores + 1
     
-    return {
-        "message": "🎉 Nouveau record dans la poule !" if is_new_best else "Score enregistré",
-        "score": session.score,
-        "attempt_number": attempt_number,
-        "is_new_best": is_new_best,
-        "rank": rank,
-        "best_score": best_score_record.best_score
-    }
+#     return {
+#         "message": "🎉 Nouveau record dans la poule !" if is_new_best else "Score enregistré",
+#         "score": session.score,
+#         "attempt_number": attempt_number,
+#         "is_new_best": is_new_best,
+#         "rank": rank,
+#         "best_score": best_score_record.best_score
+#     }
 
 
 @router.get("/users/search")
@@ -564,4 +587,60 @@ def search_users(
                 "picture": u.picture
             } for u in users
         ]
+    }
+
+@router.post("/start-session")
+def start_poule_session(
+    request: StartPouleSessionRequest,
+    token_payload=Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Créer une session de jeu pour cette poule"""
+    poule_id = request.poule_id
+
+    auth0_id = token_payload["sub"]
+    user = db.query(User).filter(User.auth0_id == auth0_id).first()
+    if not user:
+        raise HTTPException(404, "Utilisateur introuvable")
+
+    poule = db.query(Poule).filter(Poule.id == poule_id).first()
+    if not poule:
+        raise HTTPException(404, "Poule introuvable")
+
+    # Vérifier que l'utilisateur est participant
+    participant = db.query(PouleParticipant).filter(
+        PouleParticipant.user_id == user.id,
+        PouleParticipant.poule_id == poule_id
+    ).first()
+    if not participant:
+        raise HTTPException(403, "Vous n'êtes pas participant de cette poule")
+
+    # Vérifier les tentatives restantes
+    best_score = db.query(PouleBestScore).filter(
+        PouleBestScore.poule_id == poule_id,
+        PouleBestScore.user_id == user.id
+    ).first()
+
+    if poule.rejouable == "non" and best_score and best_score.total_attempts >= 1:
+        raise HTTPException(400, "Vous avez déjà utilisé votre unique tentative")
+    elif poule.rejouable not in ["unlimited", "non"]:
+        max_attempts = int(poule.rejouable)
+        if best_score and best_score.total_attempts >= max_attempts:
+            raise HTTPException(400, f"Nombre maximum de tentatives atteint ({max_attempts})")
+
+    # Créer la session
+    session = DefiSession(
+        user_id=user.id,
+        defi_id=poule.defi_id,
+        poule_id=poule.id,
+        started_at=datetime.now(timezone.utc)
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+
+    return {
+        "session_id": session.id,
+        "poule_id": poule.id,
+        "defi_route": poule.defi.route if poule.defi else None
     }

@@ -133,9 +133,16 @@ export default function Depolluedefi() {
 
   const [mapReady, setMapReady] = useState(false);
 
+  const [pouleGameInfo, setPouleGameInfo] = useState<{
+    name: string;
+    emoji: string;
+    attempts_left: number;
+  } | null>(null);
+
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const pouleId = params.get("poule_id");
+  const sessionIdFromUrl = params.get("session_id");
+  const pouleIdFromUrl = params.get("poule_id");
 
   // --- Fun facts et infos recyclage
   const [funFact, setFunFact] = useState<{id: number, fact_type: string, text: string} | null>(null);
@@ -182,24 +189,58 @@ export default function Depolluedefi() {
   }, []);
 
 
-  // Créer session si connecté et sinon non
-    useEffect(() => {
-      async function prepareDefi() {
-        if (!defiData) return;
+  // Créer session si connecté OU récupérer depuis URL (mode poule)
+  useEffect(() => {
+    async function prepareDefi() {
+      if (!defiData) return;
 
-        if (isAuthenticated) {
-          const token = await getAccessTokenSilently();
-          const response = await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-          });
-          const data = await response.json();
-          if (data.session_id) setSessionId(data.session_id);
-        } 
+      // Si on vient d'une poule, on a déjà une session
+      if (sessionIdFromUrl) {
+        setSessionId(parseInt(sessionIdFromUrl));
+        return;
       }
 
-      prepareDefi();
-    }, [defiData, isAuthenticated]);
+      // Sinon, mode normal : créer une nouvelle session
+      if (isAuthenticated) {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (data.session_id) setSessionId(data.session_id);
+      } 
+    }
+
+    prepareDefi();
+  }, [defiData, isAuthenticated, sessionIdFromUrl]);
+
+  // Charger les infos de la poule si on est en mode poule
+  useEffect(() => {
+    async function loadPouleInfo() {
+      if (!pouleIdFromUrl || !isAuthenticated) return;
+
+      try {
+        const token = await getAccessTokenSilently();
+        const res = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setPouleGameInfo({
+            name: data.poule.name,
+            emoji: data.poule.emoji,
+            attempts_left: data.poule.attempts_left
+          });
+        }
+      } catch (err) {
+        console.error("Erreur chargement infos poule:", err);
+      }
+    }
+
+    loadPouleInfo();
+  }, [pouleIdFromUrl, isAuthenticated]);
 
   // Générer les objets au montage
   useEffect(() => {
@@ -295,45 +336,29 @@ export default function Depolluedefi() {
       const result = await response.json();
       if (result.is_new_record) console.log("Nouveau record !", result.record.best_score);
 
-      // Soumettre score à la poule si pouleId et sessionId existent
-      if (sessionId && pouleId) {
+      // Si mode poule, récupérer les infos
+      if (pouleIdFromUrl) {
         try {
-          const res = await fetch("http://localhost:8000/poules/submit-score", {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json", 
-              "Authorization": `Bearer ${token}` 
-            },
-            body: JSON.stringify({
-              session_id: sessionId,
-              poule_id: parseInt(pouleId),
-            }),
+          const pouleRes = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+            headers: { "Authorization": `Bearer ${token}` }
           });
-
-          const data = await res.json();
-          if (!res.ok) {
-            console.error("Impossible de soumettre le score à la poule", data.detail);
-          } else {
-            console.log("Score envoyé à la poule ! Rang actuel :", data.rank);
+          
+          if (pouleRes.ok) {
+            const pouleData = await pouleRes.json();
             
-            // Récupérer les infos de la poule
-            const pouleRes = await fetch(`http://localhost:8000/poules/${pouleId}/ranking`, {
-              headers: { "Authorization": `Bearer ${token}` }
+            // Trouver le rang de l'utilisateur dans le classement
+            const myRanking = pouleData.ranking.find((r: any) => r.is_current_user);
+            
+            setPouleInfo({
+              name: pouleData.poule.name,
+              emoji: pouleData.poule.emoji,
+              attempts_left: pouleData.poule.attempts_left,
+              my_rank: myRanking ? myRanking.rank : null,
+              is_new_best: result.is_new_record || false
             });
-            
-            if (pouleRes.ok) {
-              const pouleData = await pouleRes.json();
-              setPouleInfo({
-                name: pouleData.poule.name,
-                emoji: pouleData.poule.emoji,
-                attempts_left: pouleData.poule.attempts_left,
-                my_rank: data.rank,
-                is_new_best: data.is_new_best
-              });
-            }
           }
         } catch (err) {
-          console.error("Erreur soumission score poule", err);
+          console.error("Erreur récupération infos poule", err);
         }
       }
     }
@@ -419,13 +444,22 @@ export default function Depolluedefi() {
 
   // Render
   if (timeUp) {
-    // Si on est en mode Poule ET qu'on a les infos de la poule
-    if (pouleId && pouleInfo) {
+    // Si on est en mode Poule
+    if (pouleIdFromUrl && (pouleInfo || pouleGameInfo)) {
+      // Utiliser pouleInfo si disponible et sinon pouleGameInfo
+      const displayInfo = pouleInfo || {
+        name: pouleGameInfo?.name || "Poule",
+        emoji: pouleGameInfo?.emoji || "🏆",
+        attempts_left: pouleGameInfo?.attempts_left || 0,
+        my_rank: 0,
+        is_new_best: false
+      };
+
       return (
         <DefaultLayout fullScreen>
           <PouleEndScreen
             objective={objective}
-            pouleInfo={pouleInfo}
+            pouleInfo={displayInfo}
             score={final_scorePlayer}
             maxScore={max_score}
             multiplicateur={multiplicateur}
@@ -435,10 +469,37 @@ export default function Depolluedefi() {
             pollutants={pollutants}
             allowedObjects={allowedObjects}
             onReturnToPoule={() => {
-              window.location.href = "/poules";
+              window.location.href = `/poules?view=detail&poule_id=${pouleIdFromUrl}`;
             }}
-            onPlayAgain={() => {
-              window.location.reload();
+            onPlayAgain={async () => {
+              if (!pouleIdFromUrl) return;
+              
+              try {
+                const token = await getAccessTokenSilently();
+                
+                // Créer une nouvelle session pour la poule
+                const res = await fetch("http://localhost:8000/poules/start-session", {
+                  method: "POST",
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                  },
+                  body: JSON.stringify({ poule_id: parseInt(pouleIdFromUrl) })
+                });
+
+                const data = await res.json();
+                
+                if (!res.ok) {
+                  alert(data?.detail || "Impossible de créer une nouvelle session");
+                  return;
+                }
+
+                // Rediriger avec la nouvelle session
+                window.location.href = `${window.location.pathname}?session_id=${data.session_id}&poule_id=${pouleIdFromUrl}`;
+              } catch (err) {
+                console.error(err);
+                alert("Erreur lors de la création de la session");
+              }
             }}
           />
         </DefaultLayout>
@@ -677,7 +738,7 @@ export default function Depolluedefi() {
       
       <div style={{width: "100%", height: "100%", overflow: "hidden", position: "relative"}}>
         
-        {/* Timer + compteur*/}
+        {/* Timer + compteur + Info poule si mode poule */}
         <div
           style={{
             position: "absolute",
@@ -686,19 +747,62 @@ export default function Depolluedefi() {
             transform: "translateX(-50%)",
             zIndex: 1000,
             display: "flex",
-            flexWrap: "wrap",
-            background: "white",
-            padding: "10px 20px",
-            justifyContent: "center",
+            flexDirection: "column",
             alignItems: "center",
-            borderRadius: 12,
-            fontWeight: "bold",
-            fontSize: 28,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-            gap: 12,
+            gap: 8,
           }}
         >
-          ⏱️ {formatTime(timeLeft)} | 🗑️ {collectedCount}/{currentMap.nb_pollutants}
+          {/* Bandeau poule si en mode poule */}
+          {pouleGameInfo && (
+            <div
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                padding: "8px 20px",
+                borderRadius: 12,
+                fontWeight: "bold",
+                fontSize: 18,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 24 }}>{pouleGameInfo.emoji}</span>
+              <span>Poule : {pouleGameInfo.name}</span>
+              <span style={{ 
+                marginLeft: 12, 
+                padding: "4px 12px", 
+                background: "rgba(255,255,255,0.2)", 
+                borderRadius: 8,
+                fontSize: 14
+              }}>
+                {pouleGameInfo.attempts_left === 999999 
+                  ? "♾️ Illimité" 
+                  : `🎯 ${pouleGameInfo.attempts_left} tentative${pouleGameInfo.attempts_left > 1 ? "s" : ""}`
+                }
+              </span>
+            </div>
+          )}
+
+          {/* Timer normal */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              background: "white",
+              padding: "10px 20px",
+              justifyContent: "center",
+              alignItems: "center",
+              borderRadius: 12,
+              fontWeight: "bold",
+              fontSize: 28,
+              boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+              gap: 12,
+            }}
+          >
+            ⏱️ {formatTime(timeLeft)} | 🗑️ {collectedCount}/{currentMap.nb_pollutants}
+          </div>
         </div>
 
         <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 40, background: "white", zIndex: 1500}} />

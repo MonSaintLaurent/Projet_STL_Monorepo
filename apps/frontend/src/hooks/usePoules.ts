@@ -50,16 +50,17 @@ export interface RankingPlayer {
 }
 
 export interface PouleDetail {
-    id: number;
-    name: string;
-    emoji: string;
-    defi_id: number;
-    defi_name: string;
-    defi_route: string | null;
-    rejouable: string;
-    time_remaining_seconds: number;
-    status: string;
-    participants: number;
+  id: number;
+  name: string;
+  emoji: string;
+  defi_id: number;
+  defi_name: string;
+  defi_route: string;
+  rejouable: string;
+  participants: number;
+  time_remaining_seconds: number;
+  status: string;
+  attempts_left: number;
 }
 
 // Hook principal pour les poules
