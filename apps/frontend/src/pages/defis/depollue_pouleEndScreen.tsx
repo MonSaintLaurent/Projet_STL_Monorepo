@@ -1,7 +1,7 @@
 import { Button } from "@heroui/button";
 import Objectif from "@/components/objective";
 
-interface PouleEndScreenProps {
+interface DepolluePouleEndScreenProps {
   objective: string;
   pouleInfo: {
     name: string;
@@ -22,7 +22,7 @@ interface PouleEndScreenProps {
   onPlayAgain: () => void;
 }
 
-export default function PouleEndScreen({
+export default function DepolluePouleEndScreen({
   objective,
   pouleInfo,
   score,
@@ -35,7 +35,7 @@ export default function PouleEndScreen({
   allowedObjects,
   onReturnToPoule,
   onPlayAgain
-}: PouleEndScreenProps) {
+}: DepolluePouleEndScreenProps) {
   
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -70,27 +70,33 @@ export default function PouleEndScreen({
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "center",
-      gap: 24,
-      padding: "40px 20px",
-      overflowY: "auto"
+      paddingTop: "40px",
+      paddingBottom: "40px",
+      paddingLeft: "20px",
+      paddingRight: "20px",
+      overflowY: "auto",
+      gap: 24
     }}>
       
       {/* En-tête Poule */}
       <div style={{
-        background: "white",
-        borderRadius: "16px",
-        padding: "20px 40px",
+        width: "100%",
         textAlign: "center",
-        border: "3px solid #646464",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
+        paddingBottom: "20px",
+        borderBottom: "2px solid #e5e7eb"
       }}>
-        <div style={{ fontSize: "48px", marginBottom: "8px" }}>
+        <div style={{ fontSize: "56px", marginBottom: "8px" }}>
           {pouleInfo.emoji}
         </div>
-        <h2 style={{ fontSize: "24px", fontWeight: "bold", margin: 0, color: "#374151" }}>
+        <h1 style={{ 
+          fontSize: "36px", 
+          fontWeight: "bold", 
+          margin: 0, 
+          color: "#374151",
+          letterSpacing: "-0.5px"
+        }}>
           Poule {pouleInfo.name}
-        </h2>
+        </h1>
       </div>
 
       {/* Classement */}
@@ -129,7 +135,6 @@ export default function PouleEndScreen({
         boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
         position: "relative"
       }}>
-        {/* "Nouveau record" au-dessus du score */}
         {pouleInfo.is_new_best && (
           <div style={{
             background: "#22c55e",
@@ -170,7 +175,7 @@ export default function PouleEndScreen({
         }}>
           {pouleInfo.attempts_left === 0 ? (
             "❌ Plus de tentatives disponibles"
-          ) : pouleInfo.attempts_left === 999999 ? (
+          ) : pouleInfo.attempts_left >= 998 ? (
             "♾️ Tentatives illimitées"
           ) : (
             `🎯 ${pouleInfo.attempts_left} tentative${pouleInfo.attempts_left > 1 ? "s" : ""} restante${pouleInfo.attempts_left > 1 ? "s" : ""}`
@@ -254,7 +259,7 @@ export default function PouleEndScreen({
             className="bg-green-600 text-white font-bold hover:bg-green-700"
             onPress={onPlayAgain}
           >
-            🔄 Réessayer ({pouleInfo.attempts_left === 999999 ? "∞" : pouleInfo.attempts_left})
+            🔄 Réessayer ({pouleInfo.attempts_left >= 998 ? "∞" : pouleInfo.attempts_left})
           </Button>
         )}
       </div>

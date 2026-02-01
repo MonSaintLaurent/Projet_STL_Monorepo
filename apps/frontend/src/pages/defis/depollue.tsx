@@ -10,7 +10,7 @@ import {defis} from "@/data/defis.json"
 import Objectif from "@/components/objective";
 import {useAuth0} from "@auth0/auth0-react";
 import {useLocation} from "react-router-dom";
-import PouleEndScreen from "./pouleEndScreen";
+import DepolluePouleEndScreen from "./depollue_pouleEndScreen";
 
 type DepollueMap = {
   id: number;
@@ -467,7 +467,7 @@ export default function Depolluedefi() {
 
       return (
         <DefaultLayout fullScreen>
-          <PouleEndScreen
+          <DepolluePouleEndScreen
             objective={objective}
             pouleInfo={displayInfo}
             score={final_scorePlayer}
@@ -787,7 +787,7 @@ export default function Depolluedefi() {
                 borderRadius: 8,
                 fontSize: 14
               }}>
-                {pouleGameInfo.attempts_left === 999999 
+                {pouleGameInfo.attempts_left >= 998 // Normalement 999999, mais sécurité
                   ? "♾️ Illimité" 
                   : `🎯 ${pouleGameInfo.attempts_left} tentative${pouleGameInfo.attempts_left > 1 ? "s" : ""}`
                 }
