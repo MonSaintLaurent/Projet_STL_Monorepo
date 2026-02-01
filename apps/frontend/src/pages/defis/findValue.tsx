@@ -16,19 +16,16 @@ import {defis} from "@/data/defis.json";
 
 export default function FindValuedefi() {
   const [maps, setMaps] = useState<any[]>([]);
-  const [currentMapId, setCurrentMapId] = useState<number>(maps[0]?.id ?? 1);
-
-  const [currentMap, setCurrentMap] = useState<1 | 2>(1); // Choix carte/niveau
+  const [currentMapId, setCurrentMapId] = useState<number | null>(null); // Null au départ
   const [geojsonData, setGeojsonData] = useState<any>(null);
   const [thresholds, setThresholds] = useState<number[]>([]);
-  const [maxDisplay, setMaxDisplay] = useState<number>(0);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
 
   const mapConfig = maps.find(m => m.id === currentMapId);
   
   const deckRef = useRef<any>(null);
 
-  const [timeLeft, setTimeLeft] = useState(mapConfig?.timer ?? 90);
+  const [timeLeft, setTimeLeft] = useState(90); // Valeur par défaut fixe mais vraie valeur dans DB après
   const [timeUp, setTimeUp] = useState(false);
 
   const [validationResult, setValidationResult] = useState<any>(null);
@@ -40,6 +37,7 @@ export default function FindValuedefi() {
   const defiData = defis.find(d => d.id === 2);
   const objective = defiData?.objective || "Trouver l'emplacement où la vitesse est la plus grande";
 
+  // Charger les maps au démarrage
   useEffect(() => {
     fetch("http://localhost:8000/data/findvalue/maps")
       .then(res => res.json())
@@ -76,7 +74,7 @@ export default function FindValuedefi() {
     }
 
     prepareDefi();
-  }, [mapConfig, isAuthenticated]);
+  }, [mapConfig, isAuthenticated, getAccessTokenSilently]);
 
 
   const resetdefi = () => {
@@ -93,10 +91,12 @@ export default function FindValuedefi() {
 
     setDeckKey(prev => prev + 1);
 
-    fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}`)
-      .then(res => res.json())
-      .then(json => setGeojsonData(json))
-      .catch(err => console.error("Erreur fetch GeoJSON:", err));
+    if (currentMapId) {
+      fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}`)
+        .then(res => res.json())
+        .then(json => setGeojsonData(json))
+        .catch(err => console.error("Erreur fetch GeoJSON:", err));
+    }
   };
 
 
@@ -144,7 +144,6 @@ export default function FindValuedefi() {
             "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
-            // defi_id: mapConfig.id,
             defi_id: 2,
             score: validationResult.final_score,
             time_spent: mapConfig.timer - timeLeft,
@@ -167,7 +166,7 @@ export default function FindValuedefi() {
     }
 
     submitScore();
-  }, [timeUp, validationResult, isAuthenticated, mapConfig, timeLeft]);
+  }, [timeUp, validationResult, isAuthenticated, mapConfig, timeLeft, getAccessTokenSilently]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -229,6 +228,23 @@ export default function FindValuedefi() {
     return selectionLayer ? [baseLayer, selectionLayer] : [baseLayer];
   }, [geojsonData, thresholds, selectedPoint]);
 
+  // Afficher un loading si mapConfig n'est pas encore chargé
+  if (!mapConfig) {
+    return (
+      <DefaultLayout fullScreen>
+        <div style={{
+          width: "100vw",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "24px"
+        }}>
+          Chargement...
+        </div>
+      </DefaultLayout>
+    );
+  }
 
   if (timeUp) {
     const imageUrl = "http://localhost:8000/static/defis/findValueImage.png";
@@ -382,14 +398,14 @@ export default function FindValuedefi() {
       </div>
 
       <div style={{width: "100vw", height: "100vh", position: "relative"}}>
-        <div className={`defi-timer ${mapConfig && timeLeft > 0 && timeLeft <= mapConfig.tick_alert ? "alert" : ""}`}>
+        <div className={`defi-timer ${timeLeft > 0 && timeLeft <= (mapConfig.tick_alert ?? 10) ? "alert" : ""}`}>
           ⏱️ {formatTime(timeLeft)}
         </div>
 
         <DeckGL
           ref={deckRef}
           key={deckKey}
-          initialViewState={mapConfig?.initial_view_state}
+          initialViewState={mapConfig.initial_view_state}
           controller={true}
           layers={geojsonData ? layers : []}
           style={{position: "absolute", top: "0", left: "0", width: "100%", height: "100%" }}
@@ -445,7 +461,7 @@ export default function FindValuedefi() {
             disabled={!selectedPoint}
             className="defi-validate-btn"
             onPress={() => {
-              if (!selectedPoint) return;
+              if (!selectedPoint || !currentMapId) return;
 
               fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}/validate`, {
                 method: "POST",
