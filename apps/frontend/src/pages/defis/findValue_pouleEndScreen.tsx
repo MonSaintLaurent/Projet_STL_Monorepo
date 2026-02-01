@@ -1,7 +1,7 @@
 import { Button } from "@heroui/button";
 import Objectif from "@/components/objective";
 
-interface DepolluePouleEndScreenProps {
+interface FindValuePouleEndScreenProps {
   objective: string;
   pouleInfo: {
     name: string;
@@ -10,39 +10,21 @@ interface DepolluePouleEndScreenProps {
     my_rank: number;
     is_new_best: boolean;
   };
-  score: number;
-  maxScore: number;
-  multiplicateur: number;
-  collectedCount: number;
-  removedAllowed: number;
-  timeLeft: number;
-  pollutants: any[];
-  allowedObjects: any[];
+  validationResult: any;
+  mapConfig: any;
   onReturnToPoule: () => void;
   onPlayAgain: () => void;
 }
 
-export default function DepolluePouleEndScreen({
+export default function FindValuePouleEndScreen({
   objective,
   pouleInfo,
-  score,
-  maxScore,
-  multiplicateur,
-  collectedCount,
-  removedAllowed,
-  timeLeft,
-  pollutants,
-  allowedObjects,
+  validationResult,
+  mapConfig,
   onReturnToPoule,
   onPlayAgain
-}: DepolluePouleEndScreenProps) {
+}: FindValuePouleEndScreenProps) {
   
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
-
   const getRankEmoji = (rank: number) => {
     if (rank === 1) return "🥇";
     if (rank === 2) return "🥈";
@@ -57,10 +39,11 @@ export default function DepolluePouleEndScreen({
     return "#6b7280";
   };
 
-  // Si my_rank est 0, le considérer comme 1
   const displayRank = pouleInfo.my_rank === 0 ? 1 : pouleInfo.my_rank;
-
-  const progressPercent = Math.min(100, (score / maxScore) * 100);
+  
+  const progressPercent = validationResult 
+    ? Math.min(100, (validationResult.final_score / validationResult.max_score) * 100)
+    : 0;
 
   return (
     <div style={{
@@ -125,7 +108,7 @@ export default function DepolluePouleEndScreen({
         </div>
       </div>
 
-      {/* Score */}
+      {/* Score avec "Nouveau record" intégré */}
       <div style={{
         background: "white",
         border: "3px solid #22c55e",
@@ -150,12 +133,25 @@ export default function DepolluePouleEndScreen({
           </div>
         )}
         
-        <div style={{ fontSize: "48px", fontWeight: "bold", color: "#22c55e" }}>
-          {score}/{maxScore}
-        </div>
-        <div style={{ fontSize: "18px", color: "#9ca3af" }}>
-          points
-        </div>
+        {validationResult && (
+            <>
+            <div style={{ fontSize: "48px", fontWeight: "bold", color: "#22c55e" }}>
+                {validationResult.final_score}/{validationResult.max_score}
+            </div>
+            <div style={{ fontSize: "18px", color: "#9ca3af" }}>
+                points
+            </div>
+
+            {/* Distance */}
+            <div style={{
+                marginTop: "12px",
+                fontSize: "16px",
+                color: "#374151"
+            }}>
+                📍 Vous étiez à <strong>{validationResult.distance_m.toFixed(0)} mètres</strong> du point optimal
+            </div>
+            </>
+        )}
       </div>
 
       {/* Tentatives restantes */}
@@ -184,57 +180,43 @@ export default function DepolluePouleEndScreen({
       </div>
 
       {/* Stats détaillées */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "16px",
-        width: "100%",
-        maxWidth: "800px"
-      }}>
+      {validationResult && (
         <div style={{
-          background: "white",
-          border: "2px solid #e5e7eb",
-          borderRadius: "12px",
-          padding: "16px",
-          textAlign: "center",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "16px",
+          width: "100%",
+          maxWidth: "800px"
         }}>
-          <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Multiplicateur</div>
-          <div style={{ fontSize: "32px", fontWeight: "bold", color: "#374151" }}>
-            ×{multiplicateur.toFixed(2)}
-          </div>
-        </div>
-
-        <div style={{
-          background: "white",
-          border: "2px solid #e5e7eb",
-          borderRadius: "12px",
-          padding: "16px",
-          textAlign: "center",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
-        }}>
-          <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Polluants retirés</div>
-          <div style={{ fontSize: "32px", fontWeight: "bold", color: "#22c55e" }}>
-            {collectedCount}
-          </div>
-        </div>
-
-        {removedAllowed > 0 && (
           <div style={{
             background: "white",
-            border: "2px solid #fca5a5",
+            border: "2px solid #e5e7eb",
             borderRadius: "12px",
             padding: "16px",
             textAlign: "center",
             boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
           }}>
-            <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Erreurs</div>
-            <div style={{ fontSize: "32px", fontWeight: "bold", color: "#dc2626" }}>
-              {removedAllowed}
+            <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Score distance</div>
+            <div style={{ fontSize: "32px", fontWeight: "bold", color: "#374151" }}>
+              {validationResult.distance_score} pts
             </div>
           </div>
-        )}
-      </div>
+
+          <div style={{
+            background: "white",
+            border: "2px solid #e5e7eb",
+            borderRadius: "12px",
+            padding: "16px",
+            textAlign: "center",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+          }}>
+            <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Bonus temps</div>
+            <div style={{ fontSize: "32px", fontWeight: "bold", color: "#22c55e" }}>
+              {validationResult.time_bonus} pts
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Boutons d'action */}
       <div style={{
@@ -252,7 +234,6 @@ export default function DepolluePouleEndScreen({
           🏆 Retour à la poule
         </Button>
 
-        {/* Désactiver le bouton si attempts_left = 0 (sauf si illimité) */}
         {(pouleInfo.attempts_left > 0 || pouleInfo.attempts_left === 999999) && (
           <Button 
             size="lg"

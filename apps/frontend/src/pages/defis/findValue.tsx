@@ -1,4 +1,4 @@
-// Version 1 : Interface de fin améliorée avec image, score basé sur distance + temps
+// FindValue avec gestion Poules + Anonymat
 import { useEffect, useState, useMemo, useRef } from "react";
 import DeckGL from "@deck.gl/react";
 import { GeoJsonLayer } from "@deck.gl/layers";
@@ -13,10 +13,14 @@ import tickSound from "@/sounds/tick.mp3";
 import {useAuth0} from "@auth0/auth0-react";
 import Objectif from "@/components/objective";
 import {defis} from "@/data/defis.json";
+import {useLocation} from "react-router-dom";
+import FindValuePouleEndScreen from "./findValue_pouleEndScreen";
 
 export default function FindValuedefi() {
+  const {isAuthenticated, getAccessTokenSilently} = useAuth0();
+
   const [maps, setMaps] = useState<any[]>([]);
-  const [currentMapId, setCurrentMapId] = useState<number | null>(null); // Null au départ
+  const [currentMapId, setCurrentMapId] = useState<number | null>(null);
   const [geojsonData, setGeojsonData] = useState<any>(null);
   const [thresholds, setThresholds] = useState<number[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
@@ -25,15 +29,33 @@ export default function FindValuedefi() {
   
   const deckRef = useRef<any>(null);
 
-  const [timeLeft, setTimeLeft] = useState(90); // Valeur par défaut fixe mais vraie valeur dans DB après
+  const [timeLeft, setTimeLeft] = useState(90);
   const [timeUp, setTimeUp] = useState(false);
 
   const [validationResult, setValidationResult] = useState<any>(null);
-  const {isAuthenticated, getAccessTokenSilently} = useAuth0();
+  const [sessionId, setSessionId] = useState<number | null>(null);
 
   const [deckKey, setDeckKey] = useState(0);
 
-  // Récupérer l'objectif depuis defis.json pour le défi FindValue (id = 2)
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const sessionIdFromUrl = params.get("session_id");
+  const pouleIdFromUrl = params.get("poule_id");
+
+  const [pouleGameInfo, setPouleGameInfo] = useState<{
+    name: string;
+    emoji: string;
+    attempts_left: number;
+  } | null>(null);
+
+  const [pouleInfo, setPouleInfo] = useState<{
+    name: string;
+    emoji: string;
+    attempts_left: number;
+    my_rank: number;
+    is_new_best: boolean;
+  } | null>(null);
+
   const defiData = defis.find(d => d.id === 2);
   const objective = defiData?.objective || "Trouver l'emplacement où la vitesse est la plus grande";
 
@@ -54,28 +76,65 @@ export default function FindValuedefi() {
       .catch(err => console.error("Erreur fetch maps:", err));
   }, []);
 
-  // Créer session si user connecté
+  // Créer/récupérer session
   useEffect(() => {
     async function prepareDefi() {
-      if (!mapConfig || !isAuthenticated) return;
+      if (!defiData) return;
 
-      try {
-        const token = await getAccessTokenSilently();
-        await fetch(`http://localhost:8000/defi_sessions/start/${mapConfig.id}`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json", 
-            "Authorization": `Bearer ${token}` 
-          },
-        });
-      } catch (err) {
-        console.error("Erreur création session:", err);
+      // Mode poule : on a déjà une session
+      if (sessionIdFromUrl) {
+        setSessionId(parseInt(sessionIdFromUrl));
+        return;
+      }
+
+      // Mode normal : créer session si authentifié
+      if (isAuthenticated) {
+        try {
+          const token = await getAccessTokenSilently();
+          const response = await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json", 
+              "Authorization": `Bearer ${token}` 
+            },
+          });
+          const data = await response.json();
+          if (data.session_id) setSessionId(data.session_id);
+        } catch (err) {
+          console.error("Erreur création session:", err);
+        }
       }
     }
 
     prepareDefi();
-  }, [mapConfig, isAuthenticated, getAccessTokenSilently]);
+  }, [defiData, isAuthenticated, sessionIdFromUrl, getAccessTokenSilently]);
 
+  // Charger infos poule si mode poule
+  useEffect(() => {
+    async function loadPouleInfo() {
+      if (!pouleIdFromUrl || !isAuthenticated) return;
+
+      try {
+        const token = await getAccessTokenSilently();
+        const res = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setPouleGameInfo({
+            name: data.poule.name,
+            emoji: data.poule.emoji,
+            attempts_left: data.poule.attempts_left
+          });
+        }
+      } catch (err) {
+        console.error("Erreur chargement infos poule:", err);
+      }
+    }
+
+    loadPouleInfo();
+  }, [pouleIdFromUrl, isAuthenticated, getAccessTokenSilently]);
 
   const resetdefi = () => {
     setSelectedPoint(null);
@@ -132,9 +191,15 @@ export default function FindValuedefi() {
 
   // Soumettre le score
   useEffect(() => {
-    if (!timeUp || !validationResult || !isAuthenticated || !mapConfig) return;
+    if (!timeUp || !validationResult) return;
 
     async function submitScore() {
+      // Gérer l'anonymat : ne rien envoyer si pas authentifié
+      if (!isAuthenticated) {
+        console.log("Utilisateur anonyme : score non enregistré");
+        return;
+      }
+
       try {
         const token = await getAccessTokenSilently();
         const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
@@ -144,9 +209,9 @@ export default function FindValuedefi() {
             "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
-            defi_id: 2,
+            session_id: sessionId,
             score: validationResult.final_score,
-            time_spent: mapConfig.timer - timeLeft,
+            time_spent: mapConfig?.timer ? mapConfig.timer - timeLeft : 0,
             completed: validationResult.won,
             metadata: { 
               distance_m: validationResult.distance_m,
@@ -157,8 +222,33 @@ export default function FindValuedefi() {
         });
 
         const result = await response.json();
-        if (result.is_new_record) {
+        
+        if (result.is_new_record && result.record) {
           console.log("Nouveau record !", result.record.best_score);
+        }
+
+        // Si mode poule, récupérer les infos
+        if (pouleIdFromUrl) {
+          try {
+            const pouleRes = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            
+            if (pouleRes.ok) {
+              const pouleData = await pouleRes.json();
+              const myRanking = pouleData.ranking.find((r: any) => r.is_current_user);
+              
+              setPouleInfo({
+                name: pouleData.poule.name,
+                emoji: pouleData.poule.emoji,
+                attempts_left: Math.max(0, pouleData.poule.attempts_left - 1),
+                my_rank: myRanking ? myRanking.rank : 1,
+                is_new_best: result.is_new_record || false
+              });
+            }
+          } catch (err) {
+            console.error("Erreur récupération infos poule", err);
+          }
         }
       } catch (err) {
         console.error("Erreur soumission score:", err);
@@ -166,7 +256,7 @@ export default function FindValuedefi() {
     }
 
     submitScore();
-  }, [timeUp, validationResult, isAuthenticated, mapConfig, timeLeft, getAccessTokenSilently]);
+  }, [timeUp, validationResult, isAuthenticated, mapConfig, timeLeft, sessionId, pouleIdFromUrl, getAccessTokenSilently]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -199,7 +289,7 @@ export default function FindValuedefi() {
       pickable: true,
       getPointRadius: 100,
       getFillColor: (f: any) => {
-        if (!thresholds || thresholds.length < 3) return [0, 0, 255, 200]; // par défaut bleu
+        if (!thresholds || thresholds.length < 3) return [0, 0, 255, 200];
         const velocity = f.properties?.velocity ?? 0;
         if (velocity < thresholds[0]) return [0, 0, 255, 200];
         if (velocity < thresholds[1]) return [0, 255, 0, 200];
@@ -247,8 +337,60 @@ export default function FindValuedefi() {
   }
 
   if (timeUp) {
-    const imageUrl = "http://localhost:8000/static/defis/findValueImage.png";
+    // Mode Poule
+    if (pouleIdFromUrl && (pouleInfo || pouleGameInfo)) {
+      const displayInfo = pouleInfo || {
+        name: pouleGameInfo?.name || "Poule",
+        emoji: pouleGameInfo?.emoji || "🏆",
+        attempts_left: pouleGameInfo?.attempts_left || 0,
+        my_rank: 1,
+        is_new_best: false
+      };
 
+      return (
+        <DefaultLayout fullScreen>
+          <FindValuePouleEndScreen
+            objective={objective}
+            pouleInfo={displayInfo}
+            validationResult={validationResult}
+            mapConfig={mapConfig}
+            onReturnToPoule={() => {
+              window.location.href = `/poules?view=detail&poule_id=${pouleIdFromUrl}`;
+            }}
+            onPlayAgain={async () => {
+              if (!pouleIdFromUrl) return;
+              
+              try {
+                const token = await getAccessTokenSilently();
+                const res = await fetch("http://localhost:8000/poules/start-session", {
+                  method: "POST",
+                  headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                  },
+                  body: JSON.stringify({ poule_id: parseInt(pouleIdFromUrl) })
+                });
+
+                const data = await res.json();
+                
+                if (!res.ok) {
+                  alert(data?.detail || "Impossible de créer une nouvelle session");
+                  return;
+                }
+
+                window.location.href = `${window.location.pathname}?session_id=${data.session_id}&poule_id=${pouleIdFromUrl}`;
+              } catch (err) {
+                console.error(err);
+                alert("Erreur lors de la création de la session");
+              }
+            }}
+          />
+        </DefaultLayout>
+      );
+    }
+
+    // Mode normal
+    const imageUrl = "http://localhost:8000/static/defis/findValueImage.png";
     const progressPercent = validationResult 
       ? Math.min(100, (validationResult.final_score / validationResult.max_score) * 100)
       : 0;
@@ -295,6 +437,7 @@ export default function FindValuedefi() {
           {/* Score */}
           {validationResult && (
             <div style={{fontSize: "48px", fontWeight: "bold", color: "#22c55e"}}>
+              {/* Affichage anonyme */}
               {isAuthenticated ? (
                 <>{validationResult.final_score}/{validationResult.max_score} points</>
               ) : (
@@ -398,8 +541,55 @@ export default function FindValuedefi() {
       </div>
 
       <div style={{width: "100vw", height: "100vh", position: "relative"}}>
-        <div className={`defi-timer ${timeLeft > 0 && timeLeft <= (mapConfig.tick_alert ?? 10) ? "alert" : ""}`}>
-          ⏱️ {formatTime(timeLeft)}
+        {/* Bandeau poule si en mode poule */}
+        <div
+          style={{
+            position: "absolute",
+            top: 70,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          {pouleGameInfo && (
+            <div
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                padding: "8px 20px",
+                borderRadius: 12,
+                fontWeight: "bold",
+                fontSize: 18,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 24 }}>{pouleGameInfo.emoji}</span>
+              <span>Poule : {pouleGameInfo.name}</span>
+              <span style={{ 
+                marginLeft: 12, 
+                padding: "4px 12px", 
+                background: "rgba(255,255,255,0.2)", 
+                borderRadius: 8,
+                fontSize: 14
+              }}>
+                {pouleGameInfo.attempts_left >= 998
+                  ? "♾️ Illimité" 
+                  : `🎯 ${pouleGameInfo.attempts_left} tentative${pouleGameInfo.attempts_left > 1 ? "s" : ""}`
+                }
+              </span>
+            </div>
+          )}
+
+          <div className={`defi-timer ${timeLeft > 0 && timeLeft <= (mapConfig.tick_alert ?? 10) ? "alert" : ""}`}>
+            ⏱️ {formatTime(timeLeft)}
+          </div>
         </div>
 
         <DeckGL
