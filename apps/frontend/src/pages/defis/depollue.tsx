@@ -11,6 +11,7 @@ import Objectif from "@/components/objective";
 import {useAuth0} from "@auth0/auth0-react";
 import {useLocation} from "react-router-dom";
 import DepolluePouleEndScreen from "./depollue_pouleEndScreen";
+import tickSound from "@/sounds/tick.mp3";
 
 type DepollueMap = {
   id: number;
@@ -132,6 +133,18 @@ export default function Depolluedefi() {
   const [allowedObjects, setAllowedObjects] = useState<defiObject[]>([]);
 
   const [mapReady, setMapReady] = useState(false);
+
+  const tickAudio = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    tickAudio.current = new Audio(tickSound);
+  }, []);
+
+  useEffect(() => {
+    if (timeLeft > 0 && timeLeft <= 10) {
+      tickAudio.current?.play().catch(() => {});
+    }
+  }, [timeLeft]);
 
   const [pouleGameInfo, setPouleGameInfo] = useState<{
     name: string;
@@ -797,25 +810,18 @@ export default function Depolluedefi() {
 
           {/* Timer normal */}
           <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              background: "white",
-              padding: "10px 20px",
-              justifyContent: "center",
-              alignItems: "center",
-              borderRadius: 12,
-              fontWeight: "bold",
-              fontSize: 28,
-              boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-              gap: 12,
-            }}
+            className={`defi-timer-depollue ${
+              timeLeft > 0 && timeLeft <= 10 ? "alert" : ""
+            }`}
           >
-            ⏱️ {formatTime(timeLeft)} | 🗑️ {collectedCount}/{currentMap.nb_pollutants}
+            ⏱️ {formatTime(timeLeft)}
+            <span className="separator">|</span>
+            🗑️ {collectedCount}/{currentMap.nb_pollutants}
           </div>
+
         </div>
 
-        <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 40, background: "white", zIndex: 1500}} />
+        <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 20, background: "white", zIndex: 1500}} />
         {mapReady && (
           <DeckGL
             ref={deckRef}

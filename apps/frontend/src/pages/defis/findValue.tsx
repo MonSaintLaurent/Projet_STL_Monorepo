@@ -533,7 +533,7 @@ export default function FindValuedefi() {
           mode="jeu"
           style={{
             position: "fixed",
-            top: 50,
+            top: 65,
             left: 20,
             zIndex: 2000,
           }}
@@ -592,6 +592,7 @@ export default function FindValuedefi() {
           </div>
         </div>
 
+        <div style={{position: "absolute", top: 0, left: 0, right: 0, height: 20, background: "white", zIndex: 1500}} />
         <DeckGL
           ref={deckRef}
           key={deckKey}
