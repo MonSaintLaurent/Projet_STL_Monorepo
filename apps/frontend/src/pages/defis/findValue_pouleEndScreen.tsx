@@ -143,6 +143,7 @@ export default function FindValuePouleEndScreen({
             </div>
 
             {/* Distance */}
+            {validationResult.final_score > 0 ? (
             <div style={{
                 marginTop: "12px",
                 fontSize: "16px",
@@ -150,6 +151,16 @@ export default function FindValuePouleEndScreen({
             }}>
                 📍 Vous étiez à <strong>{validationResult.distance_m.toFixed(0)} mètres</strong> du point optimal
             </div>
+            ) : (
+            <div style={{
+                marginTop: "12px",
+                fontSize: "16px",
+                color: "#991b1b",
+                fontWeight: "600"
+            }}>
+                ❌ Aucun point sélectionné
+            </div>
+            )}
             </>
         )}
       </div>
@@ -180,7 +191,7 @@ export default function FindValuePouleEndScreen({
       </div>
 
       {/* Stats détaillées */}
-      {validationResult && (
+      {validationResult && validationResult.final_score > 0 && (
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",

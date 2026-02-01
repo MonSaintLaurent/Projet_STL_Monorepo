@@ -189,6 +189,22 @@ export default function FindValuedefi() {
     return () => clearInterval(interval);
   }, [timeUp]);
 
+  // Gérer le temps écoulé sans validation de point
+  useEffect(() => {
+    if (timeUp && !validationResult && !selectedPoint) {
+      // Temps écoulé sans sélection de point
+      setValidationResult({
+        won: false,
+        distance_m: 0,
+        distance_score: 0,
+        time_bonus: 0,
+        final_score: 0,
+        max_score: 1000,
+        message: "Temps écoulé sans sélection"
+      });
+    }
+  }, [timeUp, validationResult, selectedPoint]);
+
   // Soumettre le score
   useEffect(() => {
     if (!timeUp || !validationResult) return;
@@ -466,22 +482,23 @@ export default function FindValuedefi() {
 
           {/* Distance */}
           <div style={{
-            background: "#dcfce7",
+            background: validationResult?.final_score === 0 ? "#fee2e2" : "#dcfce7",
             padding: "12px 24px",
             borderRadius: 8,
             fontSize: 18,
-            color: "#166534"
+            color: validationResult?.final_score === 0 ? "#991b1b" : "#166534",
+            textAlign: "center"
           }}>
             {validationResult 
-              ? `📍 Vous étiez à ${validationResult.distance_m.toFixed(0)} mètres du point optimal`
-              : selectedPoint
-                ? `Vous avez sélectionné un point à ${selectedPoint?.properties.velocity?.toFixed(2)} m/s`
-                : "Aucun point sélectionné"
+              ? validationResult.final_score === 0
+                ? "❌ Aucun point sélectionné"
+                : `📍 Vous étiez à ${validationResult.distance_m.toFixed(0)} mètres du point optimal`
+              : "Aucun point sélectionné"
             }
           </div>
 
-          {/* Détails du score */}
-          {validationResult && (
+          {/* Détails du score - Masquer si score = 0 */}
+          {validationResult && validationResult.final_score > 0 && (
             <div style={{
               background: "#f3f4f6",
               padding: "12px 24px",
@@ -587,8 +604,15 @@ export default function FindValuedefi() {
             </div>
           )}
 
-          <div className={`defi-timer ${timeLeft > 0 && timeLeft <= (mapConfig.tick_alert ?? 10) ? "alert" : ""}`}>
-            ⏱️ {formatTime(timeLeft)}
+          {/* Timer normal - wrapper pour éviter le décalage de l'animation */}
+          <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+            <div
+              className={`defi-timer ${
+                timeLeft > 0 && timeLeft <= (mapConfig.tick_alert ?? 10) ? "alert" : ""
+              }`}
+            >
+              ⏱️ {formatTime(timeLeft)}
+            </div>
           </div>
         </div>
 
