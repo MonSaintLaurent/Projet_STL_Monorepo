@@ -54,7 +54,7 @@ export default function PouleEndScreen({
     if (rank === 1) return "#fbbf24";
     if (rank === 2) return "#9ca3af";
     if (rank === 3) return "#cd7f32";
-    return "#afb0e4";
+    return "#6b7280";
   };
 
   // Si my_rank est 0, le considérer comme 1
@@ -66,7 +66,7 @@ export default function PouleEndScreen({
     <div style={{
       width: "100%",
       minHeight: "calc(100vh - 64px)",
-      background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #ddd6fe 100%)",
+      background: "linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -82,44 +82,16 @@ export default function PouleEndScreen({
         borderRadius: "16px",
         padding: "20px 40px",
         textAlign: "center",
-        border: "3px solid #afb0e4",
-        boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)"
+        border: "3px solid #646464",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
       }}>
         <div style={{ fontSize: "48px", marginBottom: "8px" }}>
           {pouleInfo.emoji}
         </div>
-        <h2 style={{ fontSize: "24px", fontWeight: "bold", margin: 0, color: "#6366f1" }}>
+        <h2 style={{ fontSize: "24px", fontWeight: "bold", margin: 0, color: "#374151" }}>
           Poule {pouleInfo.name}
         </h2>
       </div>
-
-      {/* Nouveau record ou non */}
-      {pouleInfo.is_new_best ? (
-        <div style={{
-          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-          padding: "16px 32px",
-          borderRadius: "12px",
-          fontSize: "24px",
-          fontWeight: "bold",
-          color: "white",
-          boxShadow: "0 8px 20px rgba(16,185,129,0.4)",
-          animation: "pulse 2s ease-in-out infinite"
-        }}>
-          🎉 Nouveau record personnel !
-        </div>
-      ) : (
-        <div style={{
-          background: "white",
-          border: "2px solid #e5e7eb",
-          padding: "12px 24px",
-          borderRadius: "12px",
-          fontSize: "18px",
-          color: "#374151",
-          fontWeight: "600"
-        }}>
-          ✅ Score enregistré
-        </div>
-      )}
 
       {/* Classement */}
       <div style={{
@@ -127,18 +99,18 @@ export default function PouleEndScreen({
         borderRadius: "16px",
         padding: "24px",
         textAlign: "center",
-        border: "3px solid #afb0e4",
+        border: "3px solid #646464",
         minWidth: "300px",
-        boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)"
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
       }}>
-        <div style={{ fontSize: "16px", color: "#6b7280", marginBottom: "8px" }}>
+        <div style={{ fontSize: "16px", color: "#9ca3af", marginBottom: "8px" }}>
           Ton classement
         </div>
         <div style={{
           fontSize: "72px",
           fontWeight: "bold",
           color: getRankColor(displayRank),
-          textShadow: "0 4px 12px rgba(0,0,0,0.1)"
+          textShadow: "0 2px 6px rgba(0,0,0,0.08)"
         }}>
           {getRankEmoji(displayRank)}
         </div>
@@ -150,16 +122,33 @@ export default function PouleEndScreen({
       {/* Score */}
       <div style={{
         background: "white",
-        border: "2px solid #dcfce7",
+        border: "3px solid #22c55e",
         borderRadius: "16px",
         padding: "24px 40px",
         textAlign: "center",
-        boxShadow: "0 4px 12px rgba(34, 197, 94, 0.1)"
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        position: "relative"
       }}>
+        {/* "Nouveau record" au-dessus du score */}
+        {pouleInfo.is_new_best && (
+          <div style={{
+            background: "#22c55e",
+            color: "white",
+            padding: "6px 16px",
+            borderRadius: "8px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            marginBottom: "12px",
+            display: "inline-block"
+          }}>
+            🎉 Nouveau record !
+          </div>
+        )}
+        
         <div style={{ fontSize: "48px", fontWeight: "bold", color: "#22c55e" }}>
           {score}/{maxScore}
         </div>
-        <div style={{ fontSize: "18px", color: "#6b7280" }}>
+        <div style={{ fontSize: "18px", color: "#9ca3af" }}>
           points
         </div>
       </div>
@@ -167,26 +156,23 @@ export default function PouleEndScreen({
       {/* Tentatives restantes */}
       <div style={{
         background: pouleInfo.attempts_left === 0 
-          ? "#fee2e2" 
-          : "#dcfce7",
+          ? "#f9fafb" 
+          : "white",
         borderRadius: "12px",
         padding: "16px 32px",
-        border: `2px solid ${pouleInfo.attempts_left === 0 ? "#fecaca" : "#bbf7d0"}`,
-        boxShadow: pouleInfo.attempts_left === 0 
-          ? "0 4px 12px rgba(239, 68, 68, 0.2)"
-          : "0 4px 12px rgba(34, 197, 94, 0.2)"
+        border: `2px solid ${pouleInfo.attempts_left === 0 ? "#e5e7eb" : "#22c55e"}`,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)"
       }}>
         <span style={{ 
-          fontSize: "20px", 
+          fontSize: "18px", 
           fontWeight: "600",
-          color: pouleInfo.attempts_left === 0 ? "#dc2626" : "#166534"
+          color: pouleInfo.attempts_left === 0 ? "#6b7280" : "#22c55e"
         }}>
           {pouleInfo.attempts_left === 0 ? (
             "❌ Plus de tentatives disponibles"
           ) : pouleInfo.attempts_left === 999999 ? (
             "♾️ Tentatives illimitées"
           ) : (
-            // Affichage tentatives restantes
             `🎯 ${pouleInfo.attempts_left} tentative${pouleInfo.attempts_left > 1 ? "s" : ""} restante${pouleInfo.attempts_left > 1 ? "s" : ""}`
           )}
         </span>
@@ -205,36 +191,39 @@ export default function PouleEndScreen({
           border: "2px solid #e5e7eb",
           borderRadius: "12px",
           padding: "16px",
-          textAlign: "center"
+          textAlign: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
         }}>
-          <div style={{ fontSize: "14px", color: "#6b7280" }}>Multiplicateur</div>
+          <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Multiplicateur</div>
           <div style={{ fontSize: "32px", fontWeight: "bold", color: "#374151" }}>
             ×{multiplicateur.toFixed(2)}
           </div>
         </div>
 
         <div style={{
-          background: "#dcfce7",
-          border: "2px solid #bbf7d0",
+          background: "white",
+          border: "2px solid #e5e7eb",
           borderRadius: "12px",
           padding: "16px",
-          textAlign: "center"
+          textAlign: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
         }}>
-          <div style={{ fontSize: "14px", color: "#166534" }}>Polluants retirés</div>
-          <div style={{ fontSize: "32px", fontWeight: "bold", color: "#166534" }}>
+          <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Polluants retirés</div>
+          <div style={{ fontSize: "32px", fontWeight: "bold", color: "#22c55e" }}>
             {collectedCount}
           </div>
         </div>
 
         {removedAllowed > 0 && (
           <div style={{
-            background: "#fee2e2",
-            border: "2px solid #fecaca",
+            background: "white",
+            border: "2px solid #fca5a5",
             borderRadius: "12px",
             padding: "16px",
-            textAlign: "center"
+            textAlign: "center",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
           }}>
-            <div style={{ fontSize: "14px", color: "#dc2626" }}>Erreurs</div>
+            <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "8px" }}>Erreurs</div>
             <div style={{ fontSize: "32px", fontWeight: "bold", color: "#dc2626" }}>
               {removedAllowed}
             </div>
@@ -262,7 +251,7 @@ export default function PouleEndScreen({
         {(pouleInfo.attempts_left > 0 || pouleInfo.attempts_left === 999999) && (
           <Button 
             size="lg"
-            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold hover:from-green-600 hover:to-emerald-700"
+            className="bg-green-600 text-white font-bold hover:bg-green-700"
             onPress={onPlayAgain}
           >
             🔄 Réessayer ({pouleInfo.attempts_left === 999999 ? "∞" : pouleInfo.attempts_left})

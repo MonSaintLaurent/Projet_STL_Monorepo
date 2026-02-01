@@ -60,7 +60,7 @@ function generateObjectsOnMap(
   }
 
   if (nb_allowedObjects > allowedObjects.length) {
-    throw new Error("Pas assez d’objets autorisés uniques disponibles");
+    throw new Error("Pas assez d'objets autorisés uniques disponibles");
   }
 
   const shuffledPoints = [...spawn_points].sort(() => Math.random() - 0.5);
@@ -213,7 +213,7 @@ export default function Depolluedefi() {
     }
 
     prepareDefi();
-  }, [defiData, isAuthenticated, sessionIdFromUrl]);
+  }, [defiData, isAuthenticated, sessionIdFromUrl, getAccessTokenSilently]);
 
   // Charger les infos de la poule si on est en mode poule
   useEffect(() => {
@@ -240,7 +240,7 @@ export default function Depolluedefi() {
     }
 
     loadPouleInfo();
-  }, [pouleIdFromUrl, isAuthenticated]);
+  }, [pouleIdFromUrl, isAuthenticated, getAccessTokenSilently]);
 
   // Générer les objets au montage
   useEffect(() => {
@@ -315,51 +315,61 @@ export default function Depolluedefi() {
         return;
       }
 
-      const token = await getAccessTokenSilently();
+      try {
+        const token = await getAccessTokenSilently();
 
-      // Soumettre score normal
-      const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          session_id: sessionId,
-          score: final_scorePlayer,
-          time_spent: currentMap?.timer ? currentMap.timer - effectiveTimeLeft : 0,
-          completed: collectedCount >= (currentMap?.nb_pollutants ?? 0),
-          metadata: { collectedCount, removedAllowed, multiplicateur },
-        }),
-      });
+        // Soumettre score normal
+        const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            score: final_scorePlayer,
+            time_spent: currentMap?.timer ? currentMap.timer - effectiveTimeLeft : 0,
+            completed: collectedCount >= (currentMap?.nb_pollutants ?? 0),
+            metadata: { collectedCount, removedAllowed, multiplicateur },
+          }),
+        });
 
-      const result = await response.json();
-      if (result.is_new_record) console.log("Nouveau record !", result.record.best_score);
-
-      // Si mode poule, récupérer les infos
-      if (pouleIdFromUrl) {
-        try {
-          const pouleRes = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          
-          if (pouleRes.ok) {
-            const pouleData = await pouleRes.json();
-            
-            // Trouver le rang de l'utilisateur dans le classement
-            const myRanking = pouleData.ranking.find((r: any) => r.is_current_user);
-            
-            setPouleInfo({
-              name: pouleData.poule.name,
-              emoji: pouleData.poule.emoji,
-              attempts_left: pouleData.poule.attempts_left,
-              my_rank: myRanking ? myRanking.rank : null,
-              is_new_best: result.is_new_record || false
-            });
-          }
-        } catch (err) {
-          console.error("Erreur récupération infos poule", err);
+        const result = await response.json();
+        
+        // Vérifier si result.record existe avant d'accéder à best_score
+        if (result.is_new_record && result.record) {
+          console.log("Nouveau record !", result.record.best_score);
         }
+
+        // Si mode poule, récupérer les infos
+        if (pouleIdFromUrl) {
+          try {
+            const pouleRes = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            
+            if (pouleRes.ok) {
+              const pouleData = await pouleRes.json();
+              
+              // Trouver le rang de l'utilisateur dans le classement
+              const myRanking = pouleData.ranking.find((r: any) => r.is_current_user);
+              
+              setPouleInfo({
+                name: pouleData.poule.name,
+                emoji: pouleData.poule.emoji,
+                // Décrémenter attempts_left car on vient de finir une tentative
+                attempts_left: Math.max(0, pouleData.poule.attempts_left - 1),
+                // Si pas de rank trouvé, mettre 1 par défaut au lieu de 0
+                my_rank: myRanking ? myRanking.rank : 1,
+                is_new_best: result.is_new_record || false
+              });
+            }
+          } catch (err) {
+            console.error("Erreur récupération infos poule", err);
+          }
+        }
+      } catch (err) {
+        console.error("Erreur soumission score:", err);
       }
     }
 
@@ -377,7 +387,7 @@ export default function Depolluedefi() {
     }
 
     fetchFunFact();
-  }, [timeUp, isAuthenticated, sessionId, collectedCount, removedAllowed, currentMap, endTimeLeft, timeLeft]);
+  }, [timeUp, isAuthenticated, sessionId, collectedCount, removedAllowed, currentMap, endTimeLeft, timeLeft, getAccessTokenSilently, pouleIdFromUrl]);
 
   if (!mapReady || !currentMap || !currentMap.spawn_points || pollutants.length === 0 || allowedObjects.length === 0) {
     return <div>Chargement du jeu...</div>;
@@ -451,7 +461,7 @@ export default function Depolluedefi() {
         name: pouleGameInfo?.name || "Poule",
         emoji: pouleGameInfo?.emoji || "🏆",
         attempts_left: pouleGameInfo?.attempts_left || 0,
-        my_rank: 0,
+        my_rank: 1,
         is_new_best: false
       };
 
