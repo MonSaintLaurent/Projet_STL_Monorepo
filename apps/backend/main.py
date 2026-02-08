@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import os
 
 from defis.depollue.routes import router as depollue_router
 from routes.auth import router as auth_router
@@ -17,8 +18,17 @@ from routes import userSearch
 app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 
 # CORS pour permettre au frontend de communiquer avec le backend
+## VERSION DEV
+# origins = [
+#     "http://localhost:5173",
+# ]
+
+
+## VERSION Railway
 origins = [
     "http://localhost:5173",
+    "https://TON-BACKEND.up.railway.app",
+    "https://TON-FRONT.vercel.app",
 ]
 
 app.add_middleware(
@@ -64,6 +74,17 @@ else:
     print(f"Dossier depollue trouvé : {STATIC_DEPOLLUE}")
 app.mount("/static/depollue", StaticFiles(directory=str(STATIC_DEPOLLUE)), name="depollue")
 
+## VERSION DEV
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+## VERSION Railway
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8000))
+    )
