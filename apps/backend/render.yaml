@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: mstl-backend
+    env: python
+    region: frankfurt
+    plan: free
+    rootDir: apps/backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mstl-database
+          property: connectionString
+
+databases:
+  - name: mstl-database
+    databaseName: projet_stl_db
+    user: stl_user
+    plan: free
+    region: frankfurt
