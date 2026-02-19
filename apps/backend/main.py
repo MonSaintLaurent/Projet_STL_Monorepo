@@ -24,11 +24,11 @@ app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 # ]
 
 
-## VERSION Railway
+# CORS
+## VERSION Render
 origins = [
-    "http://localhost:5173",
-    "https://TON-BACKEND.up.railway.app",
-    "https://TON-FRONT.vercel.app",
+    "http://localhost:5173",  # Dev local
+    "https://mstl-frontend.vercel.app",  # Frontend prod
 ]
 
 app.add_middleware(

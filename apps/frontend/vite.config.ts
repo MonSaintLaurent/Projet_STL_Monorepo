@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/static': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8000', // Laissé car ignoré en prod
         changeOrigin: true,
       }
     }

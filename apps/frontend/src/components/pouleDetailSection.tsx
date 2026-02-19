@@ -60,7 +60,7 @@ export default function PouleDetailSection({
             const token = await getAccessTokenSilently();
             
             // Créer une session poule
-            const res = await fetch("http://localhost:8000/poules/start-session", {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/poules/start-session`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",

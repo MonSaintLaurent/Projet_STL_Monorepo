@@ -61,7 +61,7 @@ export default function FindValuedefi() {
 
   // Charger les maps au démarrage
   useEffect(() => {
-    fetch("http://localhost:8000/data/findvalue/maps")
+    fetch(`${import.meta.env.VITE_API_URL}/data/findvalue/maps`)
       .then(res => res.json())
       .then(json => {
         setMaps(json);
@@ -91,7 +91,7 @@ export default function FindValuedefi() {
       if (isAuthenticated) {
         try {
           const token = await getAccessTokenSilently();
-          const response = await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/defi_sessions/start/${defiData.id}`, {
             method: "POST",
             headers: { 
               "Content-Type": "application/json", 
@@ -116,7 +116,7 @@ export default function FindValuedefi() {
 
       try {
         const token = await getAccessTokenSilently();
-        const res = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/poules/${pouleIdFromUrl}/ranking`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -151,7 +151,7 @@ export default function FindValuedefi() {
     setDeckKey(prev => prev + 1);
 
     if (currentMapId) {
-      fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}`)
+      fetch(`${import.meta.env.VITE_API_URL}/data/findvalue/map/${currentMapId}`)
         .then(res => res.json())
         .then(json => setGeojsonData(json))
         .catch(err => console.error("Erreur fetch GeoJSON:", err));
@@ -218,7 +218,7 @@ export default function FindValuedefi() {
 
       try {
         const token = await getAccessTokenSilently();
-        const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/defi_sessions/finish`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -246,7 +246,7 @@ export default function FindValuedefi() {
         // Si mode poule, récupérer les infos
         if (pouleIdFromUrl) {
           try {
-            const pouleRes = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+            const pouleRes = await fetch(`${import.meta.env.VITE_API_URL}/poules/${pouleIdFromUrl}/ranking`, {
               headers: { "Authorization": `Bearer ${token}` }
             });
             
@@ -285,7 +285,7 @@ export default function FindValuedefi() {
   useEffect(() => {
     if (!currentMapId) return;
 
-    fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/data/findvalue/map/${currentMapId}`)
       .then(res => res.json())
       .then(json => setGeojsonData(json))
       .catch(err => console.error("Erreur chargement GeoJSON:", err));
@@ -378,7 +378,7 @@ export default function FindValuedefi() {
               
               try {
                 const token = await getAccessTokenSilently();
-                const res = await fetch("http://localhost:8000/poules/start-session", {
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/poules/start-session`, {
                   method: "POST",
                   headers: { 
                     "Content-Type": "application/json",
@@ -406,7 +406,7 @@ export default function FindValuedefi() {
     }
 
     // Mode normal
-    const imageUrl = "http://localhost:8000/static/defis/findValueImage.png";
+    const imageUrl = `${import.meta.env.VITE_API_URL}/static/defis/findValueImage.png`;
     const progressPercent = validationResult 
       ? Math.min(100, (validationResult.final_score / validationResult.max_score) * 100)
       : 0;
@@ -678,7 +678,7 @@ export default function FindValuedefi() {
             onPress={() => {
               if (!selectedPoint || !currentMapId) return;
 
-              fetch(`http://localhost:8000/data/findvalue/map/${currentMapId}/validate`, {
+              fetch(`${import.meta.env.VITE_API_URL}/data/findvalue/map/${currentMapId}/validate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 

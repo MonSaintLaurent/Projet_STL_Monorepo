@@ -23,7 +23,7 @@ export default function ProjectsSection({ showSearch = true }: ProjectsSectionPr
   useEffect(() => {
     async function fetchProjects() {
       try {
-        const res = await fetch("http://localhost:8000/projects/");
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/projects/`);
         const data = await res.json();
         setProjects(data.projects);
       } catch (err) {

@@ -1,7 +1,7 @@
 import {useState, useEffect} from "react";
 import {useAuth0} from "@auth0/auth0-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL as string;
 
 // Types
 export interface Poule {

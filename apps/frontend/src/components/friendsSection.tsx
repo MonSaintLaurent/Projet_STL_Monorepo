@@ -3,7 +3,7 @@ import {useAuth0} from "@auth0/auth0-react";
 import {useFriends} from "@/hooks/useFriends";
 import {useUserSearch} from "@/hooks/useUserSearch";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL as string;
 
 interface PendingRequest {
     id: number;

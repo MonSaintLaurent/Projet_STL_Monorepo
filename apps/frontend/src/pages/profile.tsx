@@ -51,7 +51,7 @@ export default function ProfilePage() {
       const token = await getAccessTokenSilently();
 
       const res = await fetch(
-        `http://localhost:8000/users/me`,
+        `${import.meta.env.VITE_API_URL}/users/me`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -78,7 +78,7 @@ export default function ProfilePage() {
 
   async function saveCountry() {
     const token = await getAccessTokenSilently();
-    const res = await fetch("http://localhost:8000/users/me", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -94,7 +94,7 @@ export default function ProfilePage() {
 
   async function saveDescription() {
     const token = await getAccessTokenSilently();
-    const res = await fetch("http://localhost:8000/users/me", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,

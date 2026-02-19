@@ -178,8 +178,8 @@ export default function Depolluedefi() {
   useEffect(() => {
     async function loaddefiData() {
       const [mapsRes, objectsRes] = await Promise.all([
-        fetch("http://localhost:8000/depollue/maps"),
-        fetch("http://localhost:8000/depollue/objects"),
+        fetch(`${import.meta.env.VITE_API_URL}/depollue/maps`),
+        fetch(`${import.meta.env.VITE_API_URL}/depollue/objects`),
       ]);
 
       const mapsData = await mapsRes.json();
@@ -216,7 +216,7 @@ export default function Depolluedefi() {
       // Sinon, mode normal : créer une nouvelle session
       if (isAuthenticated) {
         const token = await getAccessTokenSilently();
-        const response = await fetch(`http://localhost:8000/defi_sessions/start/${defiData.id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/defi_sessions/start/${defiData.id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         });
@@ -235,7 +235,7 @@ export default function Depolluedefi() {
 
       try {
         const token = await getAccessTokenSilently();
-        const res = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/poules/${pouleIdFromUrl}/ranking`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -332,7 +332,7 @@ export default function Depolluedefi() {
         const token = await getAccessTokenSilently();
 
         // Soumettre score normal
-        const response = await fetch(`http://localhost:8000/defi_sessions/finish`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/defi_sessions/finish`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -357,7 +357,7 @@ export default function Depolluedefi() {
         // Si mode poule, récupérer les infos
         if (pouleIdFromUrl) {
           try {
-            const pouleRes = await fetch(`http://localhost:8000/poules/${pouleIdFromUrl}/ranking`, {
+            const pouleRes = await fetch(`${import.meta.env.VITE_API_URL}/poules/${pouleIdFromUrl}/ranking`, {
               headers: { "Authorization": `Bearer ${token}` }
             });
             
@@ -390,11 +390,11 @@ export default function Depolluedefi() {
     submitScore();
 
     async function fetchFunFact() {
-      const res = await fetch("http://localhost:8000/depollue/random-fact?fact_type=funfact");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/depollue/random-fact?fact_type=funfact`);
       const data = await res.json();
       setFunFact(data);
 
-      const res2 = await fetch("http://localhost:8000/depollue/random-fact?fact_type=recyclage");
+      const res2 = await fetch(`${import.meta.env.VITE_API_URL}/depollue/random-fact?fact_type=recyclage`);
       const data2 = await res2.json();
       setRecyclageFact(data2);
     }
@@ -434,7 +434,7 @@ export default function Depolluedefi() {
     getPosition: (d: SpawnedObject) => d.position,
 
     getIcon: (d: SpawnedObject) => ({
-      url: `http://localhost:8000/static/depollue/${d.object.image}`,
+      url: `${import.meta.env.VITE_API_URL}/static/depollue/${d.object.image}`,
       width: 128,
       height: 128,
       anchorY: 128,
@@ -501,7 +501,7 @@ export default function Depolluedefi() {
                 const token = await getAccessTokenSilently();
                 
                 // Créer une nouvelle session pour la poule
-                const res = await fetch("http://localhost:8000/poules/start-session", {
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/poules/start-session`, {
                   method: "POST",
                   headers: { 
                     "Content-Type": "application/json",
@@ -567,7 +567,7 @@ export default function Depolluedefi() {
                   {pollutants.map((obj: defiObject, idx: number) => (
                     <img
                       key={idx}
-                      src={`http://localhost:8000/static/depollue/${obj.image}`}
+                      src={`${import.meta.env.VITE_API_URL}/static/depollue/${obj.image}`}
                       alt={obj.name}
                       style={{ width: 40, height: 40 }}
                     />
@@ -580,7 +580,7 @@ export default function Depolluedefi() {
                   {allowedObjects.map((obj: defiObject, idx: number) => (
                     <img
                       key={idx}
-                      src={`http://localhost:8000/static/depollue/${obj.image}`}
+                      src={`${import.meta.env.VITE_API_URL}/static/depollue/${obj.image}`}
                       alt={obj.name}
                       style={{ width: 40, height: 40 }}
                     />
@@ -702,7 +702,7 @@ export default function Depolluedefi() {
                       }}>
                         {/* Image */}
                         <img 
-                          src={`http://localhost:8000/static/depollue/${o.object.image}`} 
+                          src={`${import.meta.env.VITE_API_URL}/static/depollue/${o.object.image}`} 
                           alt={o.object.name} 
                           style={{
                             width: 50, 

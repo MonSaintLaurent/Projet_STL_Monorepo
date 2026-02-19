@@ -19,7 +19,7 @@ export default function DefisSection() {
   useEffect(() => {
     async function fetchDefis() {
       try {
-        const res = await fetch("http://localhost:8000/defis/"); // Endpoint backend
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/defis/`); // Endpoint backend
         const data = await res.json();
         setDefis(data.defis);
       } catch (err) {
@@ -47,7 +47,7 @@ export default function DefisSection() {
         <div className="defis-grid">
           {defis.map((defi) => {
             const imageUrl = defi.image 
-              ? `http://localhost:8000/static/defis/${defi.image}`
+              ? `${import.meta.env.VITE_API_URL}/static/defis/${defi.image}`
               : null;
 
             return (

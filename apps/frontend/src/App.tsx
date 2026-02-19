@@ -33,7 +33,7 @@ function App() {
         } as any);
 
         // Envoyer l'ID token au backend
-        const res = await fetch("http://localhost:8000/auth/sync_user", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/sync_user`, {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
