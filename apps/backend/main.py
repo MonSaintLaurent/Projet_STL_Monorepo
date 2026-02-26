@@ -29,7 +29,7 @@ app = FastAPI(title="MonSaintLaurent API", version="0.1.0")
 origins = [
     "http://localhost:5173",  # Dev local
     # "https://mstl-frontend.vercel.app",  # Frontend prod
-    "https://projet-stl-monorepo.vercel.app/"
+    "https://projet-stl-monorepo.vercel.app"
 ]
 
 app.add_middleware(
