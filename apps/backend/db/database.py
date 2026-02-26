@@ -16,6 +16,9 @@ if not DATABASE_URL:
 engine = create_engine(
     DATABASE_URL,
     echo=False,  # True pour voir le SQL dans les logs
+    connect_args={
+        "options": "-c search_path=public"
+    }
 )
 
 SessionLocal = sessionmaker(

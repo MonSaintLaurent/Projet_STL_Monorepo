@@ -19,7 +19,7 @@ defis_data = [
         "defi_type": "",
         "difficulty": "medium",
         "max_score": 1000,
-        "image": "📍",
+        "image": "findValueImage.png",
         "color": "blue",
         "route": "/defis/findValue",
         "objective": "Trouve l'emplacement où la vitesse est la plus élevée !"

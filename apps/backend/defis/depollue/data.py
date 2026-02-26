@@ -67,7 +67,7 @@ depollue_maps = {
             "pitch": 0,
             "bearing": 0,
         },
-        "timer": 130,
+        "timer": 90,
         "nb_pollutants": 2,
         "nb_allowedObjects": 1,
         "pollutants": [
@@ -116,8 +116,8 @@ depollue_maps = {
             "bearing": 0,
         },
         "timer": 120,
-        "nb_pollutants": 2,
-        "nb_allowedObjects": 2,
+        "nb_pollutants": 0,
+        "nb_allowedObjects": 0,
         "pollutants": [
             pollutants["oil_barrel"],
             pollutants["plastic_bottle"],
