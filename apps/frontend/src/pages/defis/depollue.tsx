@@ -429,6 +429,12 @@ export default function Depolluedefi() {
     data: spawnedObjects,
     pickable: true,
 
+    loadOptions: {
+      fetch: {
+        mode: "cors"
+      }
+    },
+
     getId: (d: SpawnedObject) => d.id,
 
     getPosition: (d: SpawnedObject) => d.position,
