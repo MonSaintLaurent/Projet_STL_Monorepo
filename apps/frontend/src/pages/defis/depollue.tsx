@@ -440,7 +440,7 @@ export default function Depolluedefi() {
     getPosition: (d: SpawnedObject) => d.position,
 
     getIcon: (d: SpawnedObject) => ({
-      url: `${import.meta.env.VITE_API_URL}/static/depollue/${d.object.image}`,
+      url: `${import.meta.env.VITE_API_URL}/static/depollue/${d.object.image}?v=1`, // v=1 pour forcer la màj du cache
       width: 128,
       height: 128,
       anchorY: 128,
