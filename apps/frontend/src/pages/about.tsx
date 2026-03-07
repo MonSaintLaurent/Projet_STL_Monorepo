@@ -2,34 +2,67 @@ import { title } from "@/components/primitives";
 
 import DefaultLayout from "@/layouts/default";
 import "@/styles/about.css";
+import { useState, useEffect } from "react";
+
+interface TeamMember {
+  id: number;
+  image: string;
+}
 
 export default function AboutPage() {
+
+  const [teamImages, setTeamImages] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTeam() {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/equipe/`);
+        const data = await res.json();
+        setTeamImages(data.members);
+      } catch (err) {
+        console.error("Erreur fetch equipe :", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTeam();
+  }, []);
+
   const teamMembers = [
     {
       id: 1,
       name: "Richard Martin",
       description: "Étudiant finissant à la fois au sein de l'ETS Montréal et de l'École Polytechnique Universitaire de Montpellier en France, il effectue son projet de fin de maîtrise actuellement sur la maquette ici présente (à enlever j'imagine)",
-      image: "/src/images/equipe/avatar.png"
+      image: "Richard.png"
     },
     {
       id: 2,
       name: "Alexandra Nemery",
       title: "Professeure agrégée à l'École de technologie supérieure (ÉTS) à Montréal.",
       description: "Elle travaille dans le domaine de l'expérience utilisateur (logiciel, mobile, web, moteur de jeu) depuis 2009 et c'est spécialisée dans l'UX pour les jeux vidéo dans les dernières années en travaillant pour Ubisoft, Square Enix Montréal et Sony Playstation.",
-      image: "/src/images/equipe/avatar.png"
+      image: "Alexandra.jpg"
     },
     {
       id: 3,
       name: "Damien Pham Van Bang",
       description: "Le professeur Damien Pham Van Bang est spécialiste en génie côtier et travaille sur les risques d'érosion et de submersion côtières qui peuvent être exacerbés par les changements climatiques, la montée du niveau moyen de la mer et la violence des tempêtes météomarines.",
-      image: "/src/images/equipe/avatar.png"
+      image: "Damien.jpg"
     },
     {
       id: 4,
       name: "Abdelkader Hammouti",
       title: "Chercheur associé à l'École de Technologie Supérieure (ETS).",
       description: "Expertise : Fluid Mechanics, Applied Mathematics and Numerical Analysis, Multiphase Flows, High-Performance Computing",
-      image: "/src/images/equipe/avatar.png"
+      image: "Abdelkader.jpg"
+    },
+    {
+      id: 5,
+      name: "Alice Invernizzi",
+      title: "Etudiante l'INSA Lyon en Télécommunications",
+      description: "A contribué à la création du site et de son déploiement dans le cadre d'un projet avec l'ETS",
+      image: "Alice.png"
     }
   ];
 
@@ -60,8 +93,8 @@ export default function AboutPage() {
           {teamMembers.map((member) => (
             <div key={member.id} className="team-member">
               <div className="member-photo-wrapper">
-                <img 
-                  src={member.image} 
+                <img
+                  src={`${import.meta.env.VITE_API_URL}/static/equipe/${member.image}`}
                   alt={member.name}
                   className="member-photo"
                 />

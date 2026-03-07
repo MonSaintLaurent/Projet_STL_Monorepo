@@ -31,7 +31,7 @@ export const Navbar = () => {
             color="foreground"
             href="/"
           >
-            <img src="/src/images/logoSTL.png" alt="Logo" className="navbar-logo" />
+            <img src="/logoSTL.png" alt="Logo" className="navbar-logo" />
             {/* <p className="font-bold text-inherit">MonSaintLaurent</p> */}
           </Link>
         </NavbarBrand>

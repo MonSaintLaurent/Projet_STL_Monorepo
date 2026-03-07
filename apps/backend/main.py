@@ -11,6 +11,7 @@ from routes.projects import router as projects_router
 from defis.findValue.routes import findvalue_router
 from routes.defi_sessions import router as defi_sessions_router
 from routes.users import router as users_router
+from routes.equipe import router as equipe_router
 from routes import poules
 from routes import userRelation
 from routes import userSearch
@@ -50,6 +51,7 @@ app.include_router(users_router)
 app.include_router(poules.router)
 app.include_router(userRelation.router)
 app.include_router(userSearch.router)
+app.include_router(equipe_router)
 
 
 @app.get("/")
@@ -74,6 +76,15 @@ if not STATIC_DEPOLLUE.exists():
 else:
     print(f"Dossier depollue trouvé : {STATIC_DEPOLLUE}")
 app.mount("/static/depollue", StaticFiles(directory=str(STATIC_DEPOLLUE)), name="depollue")
+
+# Équipe
+STATIC_EQUIPE = BASE_DIR / "data" / "images" / "equipe"
+if not STATIC_EQUIPE.exists():
+    print(f"Dossier equipe inexistant : {STATIC_EQUIPE}")
+else:
+    print(f"Dossier equipe trouvé : {STATIC_EQUIPE}")
+
+app.mount("/static/equipe", StaticFiles(directory=str(STATIC_EQUIPE)), name="equipe")
 
 ## VERSION DEV
 # if __name__ == "__main__":
